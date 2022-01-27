@@ -9,8 +9,8 @@ It only worked with clang++ which is kinda sus.
 
 ## Usage 
 First start up the server:
-`./server`\\
+`./server`<br>
 Then connect your client like so:
-`./amogus -i <ip address>`\\
-(it uses port 8888 but you don't have to specify it anywhere)\\
+`./amogus -i <ip address>`<br>
+(it uses port 8888 but you don't have to specify it anywhere)<br>
 You can also connect by tellnet, but it is unreadable.
