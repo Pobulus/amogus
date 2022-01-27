@@ -16,7 +16,16 @@
 #define TRUE   1 
 #define FALSE  0 
 #define PORT 8888 
-     
+bool collisionCheck(int id, std::map<int, std::pair<int, int>> &position){
+    for(auto ch : position){
+        if(ch.first != id){
+            if((ch.second.first == position[id].first)&&(ch.second.second == position[id].second))return true;
+        }
+    }
+    return false;
+}
+
+
 int main(int argc , char *argv[])  
 {  
     std::map<int, std::pair<int, int>> position;
@@ -180,7 +189,7 @@ int main(int argc , char *argv[])
                 else 
                 {  
                     if(buffer[0] == 'u'){
-                        printf("u%d\n", i);
+                        std::cout <<"u" << i <<std::endl;
                         std::string pos ={};
                         for(auto el : position){
                             pos += std::to_string(el.second.first) + " " + std::to_string(el.second.second) + " ";
@@ -195,31 +204,59 @@ int main(int argc , char *argv[])
                             switch(buffer[1]){
                                 case '6':
                                     position[i].first++;
+                                    if(collisionCheck(i, position))
+                                        position[i].first--;
                                     break;
                                 case '2':
                                     position[i].second++;
+                                    if(collisionCheck(i, position))
+                                        position[i].second--;
                                     break;
                                 case '4':
                                     position[i].first--;
+                                    if(collisionCheck(i, position))
+                                        position[i].first++;
                                     break;
                                 case '8':
                                     position[i].second--;
+                                    if(collisionCheck(i, position))
+                                        position[i].second++;
                                     break;
                                 case '3':
                                     position[i].first++;
                                     position[i].second++;
+                                    if(collisionCheck(i, position))
+                                    {
+                                        position[i].first--;
+                                        position[i].second--;
+                                    }
                                     break;
                                 case '1':
                                     position[i].second++;
                                     position[i].first--;
+                                    if(collisionCheck(i, position))
+                                    {
+                                        position[i].first++;
+                                        position[i].second--;
+                                    }
                                     break;
                                 case '7':
                                     position[i].first--;
                                     position[i].second--;
+                                    if(collisionCheck(i, position))
+                                    {
+                                        position[i].first++;
+                                        position[i].second++;
+                                    }
                                     break;
                                 case '9':
                                     position[i].second--;
                                     position[i].first++;
+                                    if(collisionCheck(i, position))
+                                    {
+                                        position[i].first--;
+                                        position[i].second++;
+                                    }
                                     break;
                         
                          }

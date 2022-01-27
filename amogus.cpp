@@ -24,6 +24,13 @@ bool readParameters ( int& argc, char** argv, std::string& ip, bool &verb ) {
 
     return errors;
 }
+void update_all(std::map<int, std::pair<int, int>>  &positions){
+                for(auto ch : positions){
+                    attron(COLOR_PAIR(ch.first+1));
+                    mvprintw(ch.second.second, ch.second.first, "ඞ");
+                }attron(COLOR_PAIR(10));
+                
+}
 void await(int sockfd, const int id, std::map<int, std::pair<int, int>>  &positions)
 {
     
@@ -60,28 +67,23 @@ void await(int sockfd, const int id, std::map<int, std::pair<int, int>>  &positi
                 
                 break;
         }
-        clear();
-        mvprintw(0,0,"Enter the string : ");
- 
+//         clear();
         write(sockfd, buff, sizeof(buff));
         bzero(buff, sizeof(buff));
         read(sockfd, buff, sizeof(buff));
         
-        mvprintw(1,0,"From Server : %s   ", buff);
+        mvprintw(0,0,"From Server : %s   ", buff);
                 std::stringstream decoder;
                 decoder << buff;
                 int a=0, b=0, cnt=0;
                 while(decoder >> a >> b){
-                    attron(COLOR_PAIR(cnt+1));
+                    mvprintw(positions[cnt].second, positions[cnt].first, " ");
                     positions[cnt] = {a, b};
-                    
+                    attron(COLOR_PAIR(cnt+1));
+                    mvprintw(b, a, "ඞ");
+                    attron(COLOR_PAIR(10));
                     cnt++;
                 }
-                
-                for(auto ch : positions){
-                    attron(COLOR_PAIR(ch.first));
-                    mvprintw(ch.second.second, ch.second.first, "ඞ");
-                }attron(COLOR_PAIR(10));
                 
                  
                 
