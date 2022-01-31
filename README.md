@@ -13,4 +13,4 @@ First start up the server:
 Then connect your client like so:
 `./amogus -i <ip address>`<br>
 (it uses port 8888 but you don't have to specify it anywhere)<br>
-You can also connect by tellnet, but it is unreadable.
+If your terminal doesn't support unicode, pass the `-a` argument for ascii only.
