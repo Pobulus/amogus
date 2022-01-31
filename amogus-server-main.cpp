@@ -5,6 +5,8 @@
 #include <string>   //strlen 
 #include <stdlib.h> 
 #include <iostream> 
+#include <fstream> 
+#include <vector> 
 #include <errno.h> 
 #include <unistd.h>   //close 
 #include <arpa/inet.h>    //close 
@@ -16,7 +18,11 @@
 #define TRUE   1 
 #define FALSE  0 
 #define PORT 8888 
-bool collisionCheck(int id, std::map<int, std::pair<int, int>> &position){
+bool collisionCheck(int id, std::map<int, std::pair<int, int>> &position, std::vector<std::string> &gamemap){
+    auto curpos = position[id];
+    if(curpos.first <0 || curpos.second < 0)return true;
+    //std::cout << "znak na "<<curpos.second <<":" << curpos.first << "to: "<< (int)gamemap[curpos.first].size()<<std::endl;
+    if(gamemap[curpos.second].at(curpos.first)!= ' ') return true;
     for(auto ch : position){
         if(ch.first != id){
             if((ch.second.first == position[id].first)&&(ch.second.second == position[id].second))return true;
@@ -25,11 +31,29 @@ bool collisionCheck(int id, std::map<int, std::pair<int, int>> &position){
     return false;
 }
 
+std::vector<std::string> loadMap ( std::string mapname ) {
+    std::vector<std::string> gamemap;
 
+    std::ifstream mapStream ( mapname );
+    if ( mapStream ) {
+        std::string line;
+        
+        while ( std::getline( mapStream, line) ){
+            gamemap.push_back(line);
+
+        }
+        mapStream.close();
+    } else {
+        std::cerr << "Błąd w otwieraniu pliku "<<mapname << std::endl;
+    }
+    return gamemap;
+}
 int main(int argc , char *argv[])  
 {  
     std::map<int, std::pair<int, int>> position;
-
+    std::vector<std::string> gamemap;
+    
+    gamemap = loadMap("mapwalls.txt");
     
     int opt = TRUE;  
     int master_socket , addrlen , new_socket , client_socket[30] , 
@@ -152,7 +176,7 @@ int main(int argc , char *argv[])
                 if( client_socket[i] == 0 )  
                 {  
                     client_socket[i] = new_socket;  
-                    position[i] = {0,0};
+                    position[i] = {30, 17};
                     printf("Adding to list of sockets as %d\n" , i);  
                      if( send(new_socket, std::to_string(i).c_str(), std::to_string(i).size(), 0) != std::to_string(i).size() )  
                     {  
@@ -199,33 +223,33 @@ int main(int argc , char *argv[])
                         
                         
                     }else if(buffer[0] == 'm'){
-                        puts(buffer);
+                        
                          
                             switch(buffer[1]){
                                 case '6':
                                     position[i].first++;
-                                    if(collisionCheck(i, position))
+                                    if(collisionCheck(i, position, gamemap))
                                         position[i].first--;
                                     break;
                                 case '2':
                                     position[i].second++;
-                                    if(collisionCheck(i, position))
+                                    if(collisionCheck(i, position, gamemap))
                                         position[i].second--;
                                     break;
                                 case '4':
                                     position[i].first--;
-                                    if(collisionCheck(i, position))
+                                    if(collisionCheck(i, position, gamemap))
                                         position[i].first++;
                                     break;
                                 case '8':
                                     position[i].second--;
-                                    if(collisionCheck(i, position))
+                                    if(collisionCheck(i, position, gamemap))
                                         position[i].second++;
                                     break;
                                 case '3':
                                     position[i].first++;
                                     position[i].second++;
-                                    if(collisionCheck(i, position))
+                                    if(collisionCheck(i, position, gamemap))
                                     {
                                         position[i].first--;
                                         position[i].second--;
@@ -234,7 +258,7 @@ int main(int argc , char *argv[])
                                 case '1':
                                     position[i].second++;
                                     position[i].first--;
-                                    if(collisionCheck(i, position))
+                                    if(collisionCheck(i, position, gamemap))
                                     {
                                         position[i].first++;
                                         position[i].second--;
@@ -243,7 +267,7 @@ int main(int argc , char *argv[])
                                 case '7':
                                     position[i].first--;
                                     position[i].second--;
-                                    if(collisionCheck(i, position))
+                                    if(collisionCheck(i, position, gamemap))
                                     {
                                         position[i].first++;
                                         position[i].second++;
@@ -252,7 +276,7 @@ int main(int argc , char *argv[])
                                 case '9':
                                     position[i].second--;
                                     position[i].first++;
-                                    if(collisionCheck(i, position))
+                                    if(collisionCheck(i, position, gamemap))
                                     {
                                         position[i].first--;
                                         position[i].second++;

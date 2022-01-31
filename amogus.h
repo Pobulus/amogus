@@ -4,6 +4,7 @@
 #include <map>
 #include <fstream>
 #include <string>
+
 #include <string.h>
 #include <iostream>
 #include <sstream>
@@ -17,7 +18,18 @@
 #include <stdlib.h>
 #define MAX 80
 #define SA struct sockaddr
+#define FOVX 64
+#define FOVY 16
+#define ALIVE 1
+#define DEAD 0
 
+
+
+struct crewmate {
+    int x;
+    int y;
+    int status;
+};
 const std::string banner = 
 "  ______                                     __    __   \n"        
 " /      \\                                   /  |  /  |          \n"
@@ -34,6 +46,7 @@ const std::string banner =
 "A         Mediocre      Online    Game of   Unending  Suspicion\n";
 
 
-bool readParameters ( int& argc, char** argv, std::string& ip, bool &verb );
-
-void await(int sockfd, const int id, std::map<int, std::pair<int, int>> &positions);
+bool readParameters ( int& argc, char** argv, std::string& ip, bool &a );
+std::vector<std::string> loadMap ( std::string mapname ) ;
+void drawMap(std::vector<std::string> &gmap, int x, int y);
+void await(int sockfd, const int id, std::map<int, std::pair<int, int>>  &positions, std::vector<std::string> &gamemap, std::string crewmate);

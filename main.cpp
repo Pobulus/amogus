@@ -19,9 +19,12 @@ A         Mediocre      Online    Game of   Unending  Suspicion
 
 int main(int argc, char **argv) {
     std::string ip;
+    std::vector<std::string> gamemap;
+    
+    gamemap = loadMap("mapwalls.txt");
     std::map<int,  std::pair<int, int>> positions;
-    bool verbose;
-    if(readParameters(argc, argv, ip, verbose)){
+    bool ascii;
+    if(readParameters(argc, argv, ip, ascii)){
         return 1;
     }
     std::cout << banner << std::endl;
@@ -77,10 +80,13 @@ int main(int argc, char **argv) {
 
         bzero(buff, sizeof(buff));
         read(sockfd, buff, sizeof(buff));
-        int playertag = buff[0];
+        int playertag = buff[0]-48;
         mvprintw(10,0,"playertag: %s\n", buff);
-    await(sockfd, playertag, positions);
     
+    if(ascii)
+        await(sockfd, playertag, positions, gamemap, "A");
+    else
+        await(sockfd, playertag, positions, gamemap, "ඞ");
    
     // close the socket
     endwin();
