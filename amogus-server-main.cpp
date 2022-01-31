@@ -1,5 +1,6 @@
 //Example code: A simple server side code, which echos back the received message.
 //Handle multiple socket connections with select and fd_set on Linux 
+#include "amogus.h"
 #include <stdio.h> 
 #include <string.h>   //strlen 
 #include <string>   //strlen 
@@ -18,41 +19,25 @@
 #define TRUE   1 
 #define FALSE  0 
 #define PORT 8888 
-bool collisionCheck(int id, std::map<int, std::pair<int, int>> &position, std::vector<std::string> &gamemap){
+bool collisionCheck(int id, std::map<int, crewmate> &position, std::vector<std::string> &gamemap){
     auto curpos = position[id];
-    if(curpos.first <0 || curpos.second < 0)return true;
+    if(curpos.x <0 || curpos.y < 0)return true;
     //std::cout << "znak na "<<curpos.second <<":" << curpos.first << "to: "<< (int)gamemap[curpos.first].size()<<std::endl;
-    if(gamemap[curpos.second].at(curpos.first)!= ' ') return true;
+    if(gamemap[curpos.y].at(curpos.x)!= ' ') return true;
     for(auto ch : position){
         if(ch.first != id){
-            if((ch.second.first == position[id].first)&&(ch.second.second == position[id].second))return true;
+            if((ch.second.x == position[id].x)&&(ch.second.y == position[id].y))return true;
         }
     }
     return false;
 }
 
-std::vector<std::string> loadMap ( std::string mapname ) {
-    std::vector<std::string> gamemap;
-
-    std::ifstream mapStream ( mapname );
-    if ( mapStream ) {
-        std::string line;
-        
-        while ( std::getline( mapStream, line) ){
-            gamemap.push_back(line);
-
-        }
-        mapStream.close();
-    } else {
-        std::cerr << "Błąd w otwieraniu pliku "<<mapname << std::endl;
-    }
-    return gamemap;
-}
 int main(int argc , char *argv[])  
 {  
-    std::map<int, std::pair<int, int>> position;
+    std::map<int, crewmate> position;
+    std::map<int, crewmate> ghosts;
     std::vector<std::string> gamemap;
-    
+    std::map<int, unsigned int> killTimeout;
     gamemap = loadMap("mapwalls.txt");
     
     int opt = TRUE;  
@@ -67,7 +52,7 @@ int main(int argc , char *argv[])
     fd_set readfds;  
          
     //a message 
-    std::string message = "ECHO Daemon v1.0 \r\n";  
+    std::string message = "amogus server 0.4 \r\n";  
      
     //initialise all client_socket[] to 0 so not checked 
     for (i = 0; i < max_clients; i++)  
@@ -176,7 +161,9 @@ int main(int argc , char *argv[])
                 if( client_socket[i] == 0 )  
                 {  
                     client_socket[i] = new_socket;  
-                    position[i] = {30, 17};
+                    position[i] = {137+2*i, 7, 1};
+                    killTimeout[i] = 0;
+                    if(i == 0)position[i].status += 2;//make the first player an impostor (for debug purposes)
                     printf("Adding to list of sockets as %d\n" , i);  
                      if( send(new_socket, std::to_string(i).c_str(), std::to_string(i).size(), 0) != std::to_string(i).size() )  
                     {  
@@ -213,82 +200,156 @@ int main(int argc , char *argv[])
                 else 
                 {  
                     if(buffer[0] == 'u'){
-                        std::cout <<"u" << i <<std::endl;
-                        std::string pos ={};
-                        for(auto el : position){
-                            pos += std::to_string(el.second.first) + " " + std::to_string(el.second.second) + " ";
+                        if(killTimeout[i])killTimeout[i]--;
+                        std::string pos;
+                        if(position[i].status%2){
+                            pos ="p ";
+                        }else{
+                            pos ="g ";
+                            pos += std::to_string(ghosts[i].x)+" "+std::to_string(ghosts[i].y)+" ";
                         }
+                        for(auto el : position){
+                            pos += std::to_string(el.second.x) + " " + std::to_string(el.second.y) + " "+ std::to_string(el.second.status) + " " ;
+                        }
+                        
                         send(sd , pos.c_str() , pos.size(), 0 );
                         
+                        
+                        
+                    }else if(buffer[0] == 'k'){
+                        
+                        if((position[i].status >> 1)%2){
+                        
+                           
+                        std::string pos ="p ";
+                        for(auto &el : position){
+                            if(el.second.status%2&&(el.second.status>>1)%2!=1&&!killTimeout[i]){
+                                if(distance(position[i].x, position[i].y, el.second.x, el.second.y)<KILL_RADIUS){
+                                    killTimeout[i] = KILL_TIMEOUT;
+                                    el.second.status -= 1; 
+                                    ghosts[el.first].x = el.second.x;
+                                    ghosts[el.first].y = el.second.y;
+                                }
+                            }
+                            pos += std::to_string(el.second.x) + " " + std::to_string(el.second.y) + " "+ std::to_string(el.second.status) + " "    ;
+                            }
+                            send(sd , pos.c_str() , pos.size(), 0 );
+                        }
                         
                         
                     }else if(buffer[0] == 'm'){
                         
-                         
+                        if(position[i].status%2){
                             switch(buffer[1]){
                                 case '6':
-                                    position[i].first++;
+                                    position[i].x++;
                                     if(collisionCheck(i, position, gamemap))
-                                        position[i].first--;
+                                        position[i].x--;
                                     break;
                                 case '2':
-                                    position[i].second++;
+                                    position[i].y++;
                                     if(collisionCheck(i, position, gamemap))
-                                        position[i].second--;
+                                        position[i].y--;
                                     break;
                                 case '4':
-                                    position[i].first--;
+                                    position[i].x--;
                                     if(collisionCheck(i, position, gamemap))
-                                        position[i].first++;
+                                        position[i].x++;
                                     break;
                                 case '8':
-                                    position[i].second--;
+                                    position[i].y--;
                                     if(collisionCheck(i, position, gamemap))
-                                        position[i].second++;
+                                        position[i].y++;
                                     break;
                                 case '3':
-                                    position[i].first++;
-                                    position[i].second++;
+                                    position[i].x++;
+                                    position[i].y++;
                                     if(collisionCheck(i, position, gamemap))
                                     {
-                                        position[i].first--;
-                                        position[i].second--;
+                                        position[i].x--;
+                                        position[i].y--;
                                     }
                                     break;
                                 case '1':
-                                    position[i].second++;
-                                    position[i].first--;
+                                    position[i].y++;
+                                    position[i].x--;
                                     if(collisionCheck(i, position, gamemap))
                                     {
-                                        position[i].first++;
-                                        position[i].second--;
+                                        position[i].x++;
+                                        position[i].y--;
                                     }
                                     break;
                                 case '7':
-                                    position[i].first--;
-                                    position[i].second--;
+                                    position[i].x--;
+                                    position[i].y--;
                                     if(collisionCheck(i, position, gamemap))
                                     {
-                                        position[i].first++;
-                                        position[i].second++;
+                                        position[i].x++;
+                                        position[i].y++;
                                     }
                                     break;
                                 case '9':
-                                    position[i].second--;
-                                    position[i].first++;
+                                    position[i].y--;
+                                    position[i].x++;
                                     if(collisionCheck(i, position, gamemap))
                                     {
-                                        position[i].first--;
-                                        position[i].second++;
+                                        position[i].x--;
+                                        position[i].y++;
                                     }
                                     break;
                         
                          }
-                         std::string pos ={};
+                         std::string pos ="p ";
                          for(auto el : position){
-                            pos += std::to_string(el.second.first) + " " + std::to_string(el.second.second) + " ";
+                            pos += std::to_string(el.second.x) + " " + std::to_string(el.second.y) + " " + std::to_string(el.second.status) + " ";
                         }
+
                         send(sd , pos.c_str() , pos.size(), 0 );
+                        } else{
+                           switch(buffer[1]){
+                                case '6':
+                                    ghosts[i].x++;
+                                    break;
+                                case '2':
+                                    ghosts[i].y++;
+                                    break;
+                                case '4':
+                                    ghosts[i].x--;
+                                    
+                                    break;
+                                case '8':
+                                    ghosts[i].y--;
+                                    
+                                    break;
+                                case '3':
+                                    ghosts[i].x++;
+                                    ghosts[i].y++;
+                                   
+                                    break;
+                                case '1':
+                                    ghosts[i].y++;
+                                    ghosts[i].x--;
+                                    
+                                    break;
+                                case '7':
+                                    ghosts[i].x--;
+                                    ghosts[i].y--;
+                                    
+                                    break;
+                                case '9':
+                                    ghosts[i].y--;
+                                    ghosts[i].x++;
+                                    break;
+                        
+                         }
+                         std::string pos ="g ";
+                         pos += std::to_string(ghosts[i].x)+" "+std::to_string(ghosts[i].y)+" ";
+                         for(auto el : position){
+                            pos += std::to_string(el.second.x) + " " + std::to_string(el.second.y) + " " + std::to_string(el.second.status) + " ";
+                        }
+
+                        send(sd , pos.c_str() , pos.size(), 0 );       
+                        }
                         
                     }else if(buffer[0] == 'w'){
                         

@@ -18,48 +18,13 @@ A         Mediocre      Online    Game of   Unending  Suspicion
                                    */
 
 int main(int argc, char **argv) {
-    std::string ip;
-    std::vector<std::string> gamemap;
-    
-    gamemap = loadMap("mapwalls.txt");
-    std::map<int,  std::pair<int, int>> positions;
-    bool ascii;
-    if(readParameters(argc, argv, ip, ascii)){
-        return 1;
-    }
-    std::cout << banner << std::endl;
-    int sockfd, connfd;
-    struct sockaddr_in servaddr, cli;
-   
-    // socket create and varification
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd == -1) {
-        printf("socket creation failed...\n");
-        exit(0);
-    }
-    else
-        printf("Socket successfully created..\n");
-    bzero(&servaddr, sizeof(servaddr));
-   
-    // assign IP, PORT
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = inet_addr(ip.c_str());
-    servaddr.sin_port = htons(PORT);
-   
-    // connect the client socket to server socket
-    if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr)) != 0) {
-        printf("connection with the server failed...\n");
-        exit(0);
-    }
-    else
-        printf("connected to the server..\n");
     setlocale(LC_ALL, "");
     initscr();
     keypad(stdscr, TRUE);
     noecho();
     cbreak();
     curs_set(0);
-    timeout(100);
+    
     if(!has_colors()) {
         endwin();
         printf("No color");
@@ -74,7 +39,55 @@ int main(int argc, char **argv) {
     init_pair(5, COLOR_YELLOW, COLOR_BLACK);
     init_pair(6, COLOR_BLUE, COLOR_BLACK);
     init_pair(7, COLOR_BLACK, COLOR_BLACK);
-    // function for chat
+    mvprintw(0,0, banner.c_str());
+    
+    std::string ip;
+    std::vector<std::string> gamemap;
+    std::vector<std::string> wallmap;
+    
+    gamemap = loadMap("map.txt");
+    wallmap = loadMap("mapwalls.txt");
+    
+    std::map<int,  crewmate> positions;
+    bool ascii;
+    if(readParameters(argc, argv, ip, ascii)){
+        return 1;
+    }
+    
+    int sockfd, connfd;
+    struct sockaddr_in servaddr, cli;
+   
+    // socket create and varification
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd == -1) {
+        printw("socket creation failed...\n");
+        exit(0);
+    }
+    else
+        printw("Socket successfully created..\n");
+    bzero(&servaddr, sizeof(servaddr));
+   
+    // assign IP, PORT
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = inet_addr(ip.c_str());
+    servaddr.sin_port = htons(PORT);
+   
+    // connect the client socket to server socket
+    if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr)) != 0) {
+        printw("connection with the server failed...\n");
+        getch();
+        endwin();
+        close(sockfd);
+        return 1;
+    }
+    else
+        printw("connected to the server..\n");
+    
+    
+    getch();
+    timeout(100);
+    clear();
+    // function for connections
      char buff[MAX];
 
 
@@ -82,11 +95,14 @@ int main(int argc, char **argv) {
         read(sockfd, buff, sizeof(buff));
         int playertag = buff[0]-48;
         mvprintw(10,0,"playertag: %s\n", buff);
-    
+    crewmate ghst; //pozycja gracza kiedy jest duchem
+    playermodel cm;
     if(ascii)
-        await(sockfd, playertag, positions, gamemap, "A");
+        cm = {"A", "%%", "g"};
     else
-        await(sockfd, playertag, positions, gamemap, "ඞ");
+        cm = {"ඞ",  "🦴", "👻"};
+    
+    await(sockfd, playertag, positions, ghst, gamemap,wallmap, cm);
    
     // close the socket
     endwin();

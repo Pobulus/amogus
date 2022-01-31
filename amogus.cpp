@@ -1,4 +1,7 @@
 #include "amogus.h"
+template <typename T> int sgn(T val) {
+    return (T(0) < val) - (val < T(0));
+}
 
 bool readParameters ( int& argc, char** argv, std::string& ip, bool &a ) {
     bool errors = false;
@@ -51,7 +54,46 @@ void drawMap(std::vector<std::string> &gmap, int x, int y){
         }  
     }
     //mvprintw((FOVY/2), (FOVX/2), "ඞ");
-    mvprintw(0, 30, "%d, %d", x, y);
+    mvprintw(FOVY+2, 0, "%d, %d", x, y);
+}
+bool LOS(int xa, int ya, int xb, int yb, std::vector<std::string> &wallmap){
+    int dx, dy;
+    
+    dx = xa-xb;
+    dy = ya-yb;
+    if(distance(xa,  ya, xb, yb) > RADIUS)return false;
+    if(abs(dx)>abs(dy)){//dx jest większe
+        for(int i = 0; i < (abs(dx)-abs(dy))/2; i++){
+            xb+=sgn(dx);
+            if(wallmap[yb].at(xb) == '%')return false;
+        }
+        while(yb != ya){
+            xb+=sgn(dx);
+            if(wallmap[yb].at(xb) == '%')return false;
+            yb+=sgn(dy);
+            if(wallmap[yb].at(xb) == '%')return false;
+        }
+        while(xb != xa){
+            xb+=sgn(dx);
+            if(wallmap[yb].at(xb) == '%')return false;
+        }
+    }else {
+        for(int i = 0; i < (abs(dy)-abs(dx))/2; i++){
+            yb+=sgn(dy);
+            if(wallmap[yb].at(xb) == '%')return false;
+        }
+        while(xb != xa){
+            yb+=sgn(dy);
+            //if(wallmap[yb].at(xb) == '%')return false;
+            xb+=sgn(dx);
+            if(wallmap[yb].at(xb) == '%')return false;
+        }
+        while(yb != ya){
+            yb+=sgn(dy);
+            if(wallmap[yb].at(xb) == '%')return false;
+        }
+    }
+    return true;
 }
 std::vector<std::string> loadMap ( std::string mapname ) {
     std::vector<std::string> gamemap;
@@ -70,16 +112,19 @@ std::vector<std::string> loadMap ( std::string mapname ) {
     }
     return gamemap;
 }
-void await(int sockfd, const int id, std::map<int, std::pair<int, int>>  &positions, std::vector<std::string> &gamemap, std::string crewmate)
+int distance(int x1, int y1, int x2, int y2){
+    return sqrt(pow(x1-x2, 2)+pow(y1-y2, 2));
+}
+void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewmate &ghost, std::vector<std::string> &gamemap, std::vector<std::string> &wallmap ,playermodel model)
 {
     
-    drawMap(gamemap, positions[id].first, positions[id].second);
+    drawMap(gamemap, positions[id].x, positions[id].y);
     refresh();
     char buff[MAX];
     int a = 0;
     for (;;) {
         
-        mvprintw(3, 0, "pressed: %d", a);
+        
         refresh();
         a = getch();
         
@@ -115,12 +160,15 @@ void await(int sockfd, const int id, std::map<int, std::pair<int, int>>  &positi
                 break;
             case ERR:
                 strcpy(buff, "u\n");
-                mvprintw(0,0,"Timeout ");
+                //mvprintw(0,0,"Timeout ");
+                break;
+            case 'x':
+                strcpy(buff, "k\n");
                 break;
             default:
                 buff[0] = 'u';
                 buff[1] = '\n';
-                
+                //mvprintw(0, 0, "pressed: %d", a);
                 break;
         }
 //         clear();
@@ -128,27 +176,68 @@ void await(int sockfd, const int id, std::map<int, std::pair<int, int>>  &positi
         bzero(buff, sizeof(buff));
         read(sockfd, buff, sizeof(buff));
         
-        mvprintw(0,0,"From Server : %s   ", buff);
+        mvprintw(FOVY+1,0,"From Server : %s   ", buff);
                 std::stringstream decoder;
                 decoder << buff;
-                int a=0, b=0, cnt=0;
-                
-                while(decoder >> a >> b){
-                    mvprintw(positions[cnt].second, positions[cnt].first, " ");
-                    positions[cnt] = {a, b};
- 
-                    cnt++;
+                int a=0, b=0, c=0, cnt=0;
+                char mode;
+                decoder >> mode;
+                if (mode == 'p'){
+                    while(decoder >> a >> b >> c){
+                        mvprintw(positions[cnt].y, positions[cnt].x, " ");
+                        positions[cnt] = {a, b, c};
+    
+                        cnt++;
+                    }
                 }
-                drawMap(gamemap, positions[id].first, positions[id].second);
-                int y = positions[id].second;
-                int x = positions[id].first;
-                for(auto ch : positions){
-                    int posx = ch.second.first-x+(FOVX/2);
-                    int posy = ch.second.second-y+(FOVY/2);
-                    if(posx < FOVX && posy < FOVY){
+                if (mode == 'g'){
+                    decoder >> ghost.x >> ghost.y;
+                    while(decoder >> a >> b >> c){
+                        mvprintw(positions[cnt].y, positions[cnt].x, " ");
+                        positions[cnt] = {a, b, c};
+                        
+                        cnt++;
+                    }
+                }
+                if(positions[id].status%2){
+                    drawMap(gamemap, positions[id].x, positions[id].y);
+                    int y = positions[id].y;
+                    int x = positions[id].x;
+                    for(auto ch : positions){
+                        int posx = ch.second.x-x+(FOVX/2);
+                        int posy = ch.second.y-y+(FOVY/2);
+
+                        if(posx<FOVX&&posy<FOVY&&LOS(x, y, ch.second.x, ch.second.y, wallmap)){
                         attron(COLOR_PAIR(ch.first+1));
-                        mvprintw(posy, posx, crewmate.c_str());
-                        attron(COLOR_PAIR(10));
+                            if(ch.second.status %2)
+                                mvprintw(posy, posx, model.alive.c_str());
+                            else{ 
+                                    mvprintw(posy, posx, model.body.c_str());
+                            }
+                            attron(COLOR_PAIR(10));
+                        }
+                    }
+                        
+                }else {
+                    drawMap(gamemap, ghost.x, ghost.y);
+                    int y = ghost.y;
+                    int x = ghost.x;
+                    attron(COLOR_PAIR(id+1));
+                    mvprintw((FOVY/2), (FOVX/2), model.ghost.c_str());
+                    attron(COLOR_PAIR(10));
+                    for(auto ch : positions){
+                        int posx = ch.second.x-x+(FOVX/2);
+                        int posy = ch.second.y-y+(FOVY/2);
+
+                        if(posx<FOVX&&posy<FOVY&&LOS(x, y, ch.second.x, ch.second.y, wallmap)){
+                        attron(COLOR_PAIR(ch.first+1));
+                            if(ch.second.status %2)
+                                mvprintw(posy, posx, model.alive.c_str());
+                            else{ 
+                                    mvprintw(posy, posx, model.body.c_str());
+                            }
+                            attron(COLOR_PAIR(10));
+                        }
                     }
                 }
                 

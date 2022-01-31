@@ -4,6 +4,7 @@
 #include <map>
 #include <fstream>
 #include <string>
+#include <cmath>
 
 #include <string.h>
 #include <iostream>
@@ -20,9 +21,11 @@
 #define SA struct sockaddr
 #define FOVX 64
 #define FOVY 16
+#define RADIUS 30
 #define ALIVE 1
 #define DEAD 0
-
+#define KILL_TIMEOUT 100
+#define KILL_RADIUS 7
 
 
 struct crewmate {
@@ -30,6 +33,14 @@ struct crewmate {
     int y;
     int status;
 };
+struct playermodel {
+    std::string alive;
+    std::string body;
+    std::string ghost;
+    
+    
+};
+
 const std::string banner = 
 "  ______                                     __    __   \n"        
 " /      \\                                   /  |  /  |          \n"
@@ -49,4 +60,5 @@ const std::string banner =
 bool readParameters ( int& argc, char** argv, std::string& ip, bool &a );
 std::vector<std::string> loadMap ( std::string mapname ) ;
 void drawMap(std::vector<std::string> &gmap, int x, int y);
-void await(int sockfd, const int id, std::map<int, std::pair<int, int>>  &positions, std::vector<std::string> &gamemap, std::string crewmate);
+int distance(int x1, int y1, int x2, int y2);
+void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewmate &ghost, std::vector<std::string> &gamemap, std::vector<std::string> &wallmap, playermodel model);
