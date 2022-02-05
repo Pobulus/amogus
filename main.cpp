@@ -18,6 +18,11 @@ A         Mediocre      Online    Game of   Unending  Suspicion
                                    */
 
 int main(int argc, char **argv) {
+    bool ascii;
+     std::string ip;
+       if(readParameters(argc, argv, ip, ascii)){
+        return 1;
+    }
     setlocale(LC_ALL, "");
     initscr();
     keypad(stdscr, TRUE);
@@ -41,18 +46,20 @@ int main(int argc, char **argv) {
     init_pair(7, COLOR_BLACK, COLOR_BLACK);
     mvprintw(0,0, banner.c_str());
     
-    std::string ip;
+   std::map<char,std::vector<std::string>> triggers;
     std::vector<std::string> gamemap;
     std::vector<std::string> wallmap;
+    
     
     gamemap = loadMap("map.txt");
     wallmap = loadMap("mapwalls.txt");
     
+    
+    triggers = loadLabels("cha_list.txt");
+    triggers[' '] = {"", ""};
     std::map<int,  crewmate> positions;
-    bool ascii;
-    if(readParameters(argc, argv, ip, ascii)){
-        return 1;
-    }
+    
+ 
     
     int sockfd, connfd;
     struct sockaddr_in servaddr, cli;
@@ -83,7 +90,6 @@ int main(int argc, char **argv) {
     else
         printw("connected to the server..\n");
     
-    
     getch();
     timeout(100);
     clear();
@@ -100,9 +106,9 @@ int main(int argc, char **argv) {
     if(ascii)
         cm = {"A", "%%", "g"};
     else
-        cm = {"ඞ",  "🦴", "👻"};
+        cm = {"ඞ",  "🦴 ", "👻"};
     
-    await(sockfd, playertag, positions, ghst, gamemap,wallmap, cm);
+    await(sockfd, playertag, positions, ghst, gamemap,wallmap, cm, triggers);
    
     // close the socket
     endwin();
