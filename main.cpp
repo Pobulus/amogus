@@ -18,33 +18,13 @@ A         Mediocre      Online    Game of   Unending  Suspicion
                                    */
 
 int main(int argc, char **argv) {
-    bool ascii;
+    bool ascii=false, kb=false;
      std::string ip;
-       if(readParameters(argc, argv, ip, ascii)){
+       if(readParameters(argc, argv, ip, ascii, kb)){
         return 1;
     }
     setlocale(LC_ALL, "");
-    initscr();
-    keypad(stdscr, TRUE);
-    noecho();
-    cbreak();
-    curs_set(0);
     
-    if(!has_colors()) {
-        endwin();
-        printf("No color");
-        return 0;
-    }
-    start_color();
-    init_pair(10, COLOR_WHITE, COLOR_BLACK);
-    init_pair(1, COLOR_RED, COLOR_BLACK);
-    init_pair(2, COLOR_CYAN, COLOR_BLACK);
-    init_pair(3, COLOR_MAGENTA, COLOR_BLACK);
-    init_pair(4, COLOR_GREEN, COLOR_BLACK);
-    init_pair(5, COLOR_YELLOW, COLOR_BLACK);
-    init_pair(6, COLOR_BLUE, COLOR_BLACK);
-    init_pair(7, COLOR_BLACK, COLOR_BLACK);
-    mvprintw(0,0, banner.c_str());
     
    std::map<char,std::vector<std::string>> triggers;
     std::vector<std::string> gamemap;
@@ -67,11 +47,11 @@ int main(int argc, char **argv) {
     // socket create and varification
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == -1) {
-        printw("socket creation failed...\n");
+        std::cout << "socket creation failed..."<<std::endl;
         exit(0);
     }
     else
-        printw("Socket successfully created..\n");
+        std::cout << "Socket successfully created..."<<std::endl;
     bzero(&servaddr, sizeof(servaddr));
    
     // assign IP, PORT
@@ -81,26 +61,63 @@ int main(int argc, char **argv) {
    
     // connect the client socket to server socket
     if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr)) != 0) {
-        printw("connection with the server failed...\n");
+        std::cout << "connection with the server failed..."<<std::endl;
         getch();
         endwin();
         close(sockfd);
         return 1;
     }
     else
-        printw("connected to the server..\n");
+        std::cout << "connected to the server..."<<std::endl;
+    initscr();
+    keypad(stdscr, TRUE);
+    noecho();
+    cbreak();
+    curs_set(0);
     
+    if(!has_colors()) {
+        endwin();
+        printf("No color");
+        return 0;
+    }
+    start_color();
+    init_pair(20, COLOR_WHITE, COLOR_BLACK);
+    init_pair(1, COLOR_RED, COLOR_BLACK);
+    init_pair(2, COLOR_CYAN, COLOR_BLACK);
+    init_pair(3, COLOR_MAGENTA, COLOR_BLACK);
+    init_pair(4, COLOR_GREEN, COLOR_BLACK);
+    init_pair(5, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(6, COLOR_BLUE, COLOR_BLACK);
+    init_pair(7, COLOR_WHITE, COLOR_BLACK);
+    
+    init_pair(8, COLOR_BLACK, COLOR_RED);
+    init_pair(9, COLOR_BLACK, COLOR_CYAN );
+    init_pair(10, COLOR_BLACK, COLOR_MAGENTA);
+    init_pair(11, COLOR_BLACK, COLOR_GREEN);
+    init_pair(12, COLOR_BLACK, COLOR_YELLOW);
+    init_pair(13, COLOR_BLACK, COLOR_BLUE);
+    init_pair(14, COLOR_BLACK, COLOR_WHITE );
+    mvprintw(0,0, banner.c_str());
     getch();
+    
     timeout(100);
     clear();
+    
+    printCenter("Server is full.", FOVX, FOVY);
+    refresh();
     // function for connections
      char buff[MAX];
 
 
         bzero(buff, sizeof(buff));
+        int playertag = 0;
         read(sockfd, buff, sizeof(buff));
-        int playertag = buff[0]-48;
-        mvprintw(10,0,"playertag: %s\n", buff);
+        {
+        std::stringstream deco;
+        deco << buff;
+        deco >> playertag;
+        }
+       
     crewmate ghst; //pozycja gracza kiedy jest duchem
     playermodel cm;
     if(ascii)
@@ -108,7 +125,7 @@ int main(int argc, char **argv) {
     else
         cm = {"ඞ",  "🦴 ", "👻"};
     
-    await(sockfd, playertag, positions, ghst, gamemap,wallmap, cm, triggers);
+    await(sockfd, playertag, positions, ghst, gamemap,wallmap, cm, triggers, kb);
    
     // close the socket
     endwin();

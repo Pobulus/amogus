@@ -1,60 +1,41 @@
-//Example code: A simple server side code, which echos back the received message.
-//Handle multiple socket connections with select and fd_set on Linux
 #include "amogus.h"
 #include <stdio.h>
-#include <string.h>   //strlen 
-#include <string>   //strlen 
+#include <string.h>
+#include <string>
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <errno.h>
-#include <unistd.h>   //close 
-#include <arpa/inet.h>    //close 
+#include <unistd.h>
+#include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO macros 
+#include <sys/time.h>
 #include <map>
 #include <random>
 #define TRUE   1
 #define FALSE  0
+
 #define PORT 8888
-bool collisionCheck(int id, std::map<int, crewmate> &position, std::vector<std::string> &gamemap) {
-    auto curpos = position[id];
-    if(curpos.x <0 || curpos.y < 0)return true;
-    //std::cout << "znak na "<<curpos.second <<":" << curpos.first << "to: "<< (int)gamemap[curpos.first].size()<<std::endl;
-    
-    for(auto ch : position) {
-        if(ch.first != id) {
-            if((ch.second.x == position[id].x)&&(ch.second.y == position[id].y))return true;
-        }
-    }
-    if(gamemap[curpos.y].at(curpos.x)== ' ')return false;
-    else if(gamemap[curpos.y].at(curpos.x)>'?'&&gamemap[curpos.y].at(curpos.x)<'[') return false;
-    else if(gamemap[curpos.y].at(curpos.x)>'_'&&gamemap[curpos.y].at(curpos.x)<'{') return false;
-    else if(gamemap[curpos.y].at(curpos.x)>'/'&&gamemap[curpos.y].at(curpos.x)<':') return false;
-    else return true;
-}
-void startGame(bool &gameStatus, std::map<int, crewmate> &position) {
-    position[rand()%position.size()].status += 2;//make a random player the impostor
-    gameStatus = true;
-    std::cout << "starting game" <<std::endl;
-    return;
-}
+
+
 int main(int argc, char *argv[])
 {
-    bool game_in_progress = false;
-    std::map<int, bool> ready;
-    std::map<int, crewmate> position;
-    std::map<int, crewmate> ghosts;
+    srand((unsigned int)time(NULL));
+    status game;
+    game.in_progress = false;
+    game.timer.voting = 0;
+    game.winner = 0;
     std::vector<std::string> gamemap;
-    std::map<int, unsigned int> killTimeout;
+    std::map<char,std::vector<std::string>> triggers;
     gamemap = loadMap("mapwalls.txt");
+    triggers = loadLabels("cha_list.txt");
 
     int opt = TRUE;
     int master_socket, addrlen, new_socket, client_socket[30],
-        max_clients = 30, activity, i, valread, sd;
+        max_clients = 14, activity, i, valread, sd;
     int max_sd;
     struct sockaddr_in address;
 
@@ -64,7 +45,7 @@ int main(int argc, char *argv[])
     fd_set readfds;
 
     //a message
-    std::string message = "amogus server 0.6 \r\n";
+    std::string message = "amogus server 0.9 \r\n";
 
     //initialise all client_socket[] to 0 so not checked
     for (i = 0; i < max_clients; i++)
@@ -174,10 +155,10 @@ int main(int argc, char *argv[])
                 {
                     //NEW CONNECTION
                     client_socket[i] = new_socket;
-                    if(!ready[i]) {
-                        position[i] = {137+2*i, 7, 1};
-                        killTimeout[i] = 0;
-                        ready[i] = false;
+                    if(!game.ready[i]) {
+                        game.position[i] = {137+2*i, 7, 1};
+                        game.timer.kill[i] = INITIAL_KTIMEOUT;
+                        game.ready[i] = false;
 
                     }
 
@@ -217,177 +198,102 @@ int main(int argc, char *argv[])
                 else
                 {
 
-                    if(buffer[0] == 'u') {
+                    if(buffer[0] == 'u') {//player asks for an update
                         //std::cout << "u" << i <<std::endl;
-                        if(killTimeout[i])killTimeout[i]--;
-                        std::string pos;
-                        if(game_in_progress) {
-                            if(position[i].status%2) {
-                                pos ="p ";
-                            } else {
-                                pos ="g ";
-                                pos += std::to_string(ghosts[i].x)+" "+std::to_string(ghosts[i].y)+" "+std::to_string(ghosts[i].status)+" ";
+                        if(game.timer.kill[i])game.timer.kill[i]--;
+                        if(game.timer.voting) {
+                            game.timer.voting--;
+                            if(!game.timer.voting) {
+                                votesResult(game);
+                                cleanDeadBodies(game.position);
+
+
+
                             }
-                        } else {
-                            pos ="w ";
-                            int count = 0;
-                            for(auto el : ready) {
-                                if(el.second)count++;
-                            }
-                            pos += std::to_string(count) + " ";
-                            pos += std::to_string(ready.size())+ " ";
-                            if(count == ready.size())startGame(game_in_progress, position);
-                        }
-                        for(auto el : position) {
-                            pos += std::to_string(el.second.x) + " " + std::to_string(el.second.y) + " "+ std::to_string(el.second.status) + " " ;
                         }
 
-                        send(sd, pos.c_str(), pos.size(), 0 );
+                        sendReply(sd, i, game);
 
-                    } else if(buffer[0] == 'k'&& game_in_progress) {
+                    } else if(buffer[0] == 'k'&& game.in_progress && !game.timer.voting) {//player wants to kill
 
-                        if((position[i].status >> 1)%2) {
-
-
-                            std::string pos ="p ";
-                            for(auto &el : position) {
-                                if(el.second.status%2&&(el.second.status>>1)%2!=1&&!killTimeout[i]) {
-                                    if(distance(position[i].x, position[i].y, el.second.x, el.second.y)<KILL_RADIUS) {
-                                        killTimeout[i] = KILL_TIMEOUT;
-                                        el.second.status -= 1;
-                                        ghosts[el.first].x = el.second.x;
-                                        ghosts[el.first].y = el.second.y;
-                                        ghosts[el.first].status = i;
+                        if((game.position[i].status >> 1)%2) {
+                            for(auto &el : game.position) {
+                                if(el.second.status%2&&(el.second.status>>1)%2!=1&&!game.timer.kill[i]) {
+                                    if(distance(game.position[i].x, game.position[i].y, el.second.x, el.second.y)<KILL_RADIUS) {
+                                        game.timer.kill[i] = KILL_TIMEOUT;
+                                        el.second.status--;
+                                        game.ghosts[el.first].x = el.second.x;
+                                        game.ghosts[el.first].y = el.second.y;
+                                        game.ghosts[el.first].status = i;
                                     }
                                 }
-                                pos += std::to_string(el.second.x) + " " + std::to_string(el.second.y) + " "+ std::to_string(el.second.status) + " "    ;
-                            }
-                            send(sd, pos.c_str(), pos.size(), 0 );
-                        }
 
+                            }
+                            sendReply(sd, i, game);
+                        }
+                    } else if(buffer[0] == 'c'&& game.in_progress) {//player reports a body
+
+                        for(auto &el : game.position) {
+
+                            if(el.second.status%2==0&&distance(game.position[i].x, game.position[i].y, el.second.x, el.second.y)<KILL_RADIUS) {
+
+                                game.timer.voting = game.position.size()*300;
+                                for(auto x : game.position) {
+                                    if(x.second.status%2) game.votes[x.first] = -1;
+                                    else game.votes[x.first] = -2;
+                                }
+                                break;
+                            }
+
+                        }
+                        sendReply(sd, i, game);
+
+                    } else if(buffer[0] == 't'&& game.in_progress) {//player wants to do a task
+                        char trigger;
+
+                        if(game.position[i].status%2)
+                            trigger = gamemap[game.position[i].y][game.position[i].x];
+                        else
+                            trigger = gamemap[game.ghosts[i].y][game.ghosts[i].x];
+
+
+                        if(trigger!= ' ') {
+                            if(triggers[trigger][0]=="util") {
+                                if(triggers[trigger][2]=="button") { //emeregency meeting
+                                    game.timer.voting = game.position.size()*300;
+                                    for(auto x : game.position) {
+                                        if(x.second.status%2)game.votes[x.first] = -1;
+                                        else game.votes[x.first] = -2;
+                                    }
+
+                                }
+                            }
+                            std::cout<<"Player "<<i<<":" << triggers[trigger][0]<<" "<<triggers[trigger][1]<<" "<<triggers[trigger][2]<<" "<<std::endl;
+                        }
+                        sendReply(sd, i, game);
+
+
+                    } else if(buffer[0] == 'v') { //player votes
+                        int attr = buffer[1]-'0';
+                        if(attr<= game.votes.size()) {
+                            if(game.votes[i]==-1&&game.position[i].status%2&&game.position[attr-1].status%2) {
+                                game.votes[i] = attr;
+
+                            }
+                        }
+                        sendReply(sd, i, game);
 
                     } else if(buffer[0] == 'm') { //player moves
 
-                        if(position[i].status%2) {
-                            switch(buffer[1]) {
-                            case '6':
-                                position[i].x++;
-                                if(collisionCheck(i, position, gamemap))
-                                    position[i].x--;
-                                break;
-                            case '2':
-                                position[i].y++;
-                                if(collisionCheck(i, position, gamemap))
-                                    position[i].y--;
-                                break;
-                            case '4':
-                                position[i].x--;
-                                if(collisionCheck(i, position, gamemap))
-                                    position[i].x++;
-                                break;
-                            case '8':
-                                position[i].y--;
-                                if(collisionCheck(i, position, gamemap))
-                                    position[i].y++;
-                                break;
-                            case '3':
-                                position[i].x++;
-                                position[i].y++;
-                                if(collisionCheck(i, position, gamemap))
-                                {
-                                    position[i].x--;
-                                    position[i].y--;
-                                }
-                                break;
-                            case '1':
-                                position[i].y++;
-                                position[i].x--;
-                                if(collisionCheck(i, position, gamemap))
-                                {
-                                    position[i].x++;
-                                    position[i].y--;
-                                }
-                                break;
-                            case '7':
-                                position[i].x--;
-                                position[i].y--;
-                                if(collisionCheck(i, position, gamemap))
-                                {
-                                    position[i].x++;
-                                    position[i].y++;
-                                }
-                                break;
-                            case '9':
-                                position[i].y--;
-                                position[i].x++;
-                                if(collisionCheck(i, position, gamemap))
-                                {
-                                    position[i].x--;
-                                    position[i].y++;
-                                }
-                                break;
+                        if(game.position[i].status%2) {
+                            applyMovement(buffer[1], i, game.position, gamemap, false);
 
-                            }
-                            std::string pos;
-                            if(game_in_progress) {
-                                pos ="p ";
-                            } else {
-                                pos ="w ";
-                                int count = 0;
-                                for(auto el : ready) {
-                                    if(el.second)count++;
-                                }
-                                pos += std::to_string(count) + " ";
-                                pos += std::to_string(ready.size())+ " ";
+                            sendReply(sd, i, game);
 
-                            }
-                            for(auto el : position) {
-                                pos += std::to_string(el.second.x) + " " + std::to_string(el.second.y) + " " + std::to_string(el.second.status) + " ";
-                            }
-
-                            send(sd, pos.c_str(), pos.size(), 0 );
                         } else {
-                            switch(buffer[1]) {
-                            case '6':
-                                ghosts[i].x++;
-                                break;
-                            case '2':
-                                ghosts[i].y++;
-                                break;
-                            case '4':
-                                ghosts[i].x--;
+                            applyMovement(buffer[1], i, game.ghosts, gamemap, true);
+                            sendReply(sd, i, game);
 
-                                break;
-                            case '8':
-                                ghosts[i].y--;
-
-                                break;
-                            case '3':
-                                ghosts[i].x++;
-                                ghosts[i].y++;
-
-                                break;
-                            case '1':
-                                ghosts[i].y++;
-                                ghosts[i].x--;
-
-                                break;
-                            case '7':
-                                ghosts[i].x--;
-                                ghosts[i].y--;
-
-                                break;
-                            case '9':
-                                ghosts[i].y--;
-                                ghosts[i].x++;
-                                break;
-                            }
-                            std::string pos ="g ";
-                            pos += std::to_string(ghosts[i].x)+" "+std::to_string(ghosts[i].y)+" "+ std::to_string(ghosts[i].status)+" ";
-                            for(auto el : position) {
-                                pos += std::to_string(el.second.x) + " " + std::to_string(el.second.y) + " " + std::to_string(el.second.status) + " ";
-                            }
-                            send(sd, pos.c_str(), pos.size(), 0 );
                         }
                     } else if(buffer[0] == 'w') { //player asks who they are
                         std::cout << "Who am I? "<<i<<std::endl;
@@ -395,23 +301,8 @@ int main(int argc, char *argv[])
                         send(sd, mess.c_str(), mess.size(), 0 );
                     } else if(buffer[0] == 'r') { //player ready
                         std::cout << "Player ready:  "<<i<<std::endl;
-                        ready[i] = true;
-                        std:: string pos ="w ";
-                        int count = 0;
-                        for(auto el : ready) {
-                            if(el.second)count++;
-                        }
-                        pos += std::to_string(count) + " ";
-                        pos += std::to_string(ready.size())+ " ";
-
-
-                        for(auto el : position) {
-                            pos += std::to_string(el.second.x) + " " + std::to_string(el.second.y) + " " + std::to_string(el.second.status) + " ";
-                        }
-
-                        send(sd, pos.c_str(), pos.size(), 0 );
-
-
+                        game.ready[i] = true;
+                        sendReply(sd, i, game);
                     } else {
                         //set the string terminating NULL byte on the end
                         //of the data read
