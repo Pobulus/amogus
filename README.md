@@ -7,7 +7,7 @@ You have to install libncurses first.
 `g++ amogus.cpp amogus-server-main.cpp -o amogus -lncursesw`
 - server:
 `g++ amogus-server-main.cpp  amogus.cpp -o server -lncursesw`
-- server:
+- keybinder:
 `g++ keybinder.cpp -o keybinder -lncursesw`
 
 
