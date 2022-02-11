@@ -8,7 +8,7 @@ You have to install libncurses first.
 - server:
 `g++ amogus-server-main.cpp  amogus.cpp -o server -lncursesw`
 - server:
-`g++ amogus-server-main.cpp  amogus.cpp -o server -lncursesw`
+`g++ keybinder.cpp -o keybinder -lncursesw`
 
 
 
@@ -19,4 +19,4 @@ Then connect your client like so:
 `./amogus -i <ip address>`<br>
 (it uses port 8888 but you don't have to specify it anywhere)<br>
 If your terminal doesn't support unicode, pass the `-a` argument for ascii only.<br>
-
+You can generate custom keybinds whith `keybinder`, then pass the `-k` argument to use them
