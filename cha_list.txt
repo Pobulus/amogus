@@ -18,16 +18,16 @@ p task admin fix
 q task cafeteria upload
 r task cafeteria empty
 s task cafeteria fix
-t task comunications divert
+t task comunications accept
 u task comunications upload
 v task electrical upload
 w task electrical calibrate
-x task electrival divert
+x task electrical divert
 y task electrical fix
-z task engine_up divert
+z task engine_up accept
 A task engine_up align
 B task engine_up fuel
-C task engine_down divert
+C task engine_down accept
 D task engine_down align
 E task engine_down fuel
 F task medbay scan
@@ -35,22 +35,22 @@ G task medbay sample
 H task navigation chart
 I task navigation stablilize
 J task navigation upload
-K task navigation divert
+K task navigation accept
 L task navigation fix
 M task o2 empty
-N task o2 divert
+N task o2 accept
 O task o2 clean
 P task reactor start
 Q task reactor unlock
-R task security divert
+R task security accept
 S task shields prime
-T task shields divert
+T task shields accept
 U task storage fuel
 V task storage fix
 W task storage empty
 X task weapons clear
 Y task weapons upload
-Z task weapons divert
+Z task weapons accept
 0 sabbo reactor hand_top
 1 sabbo reactor hand_bot
 2 sabbo electrical lights
@@ -59,8 +59,14 @@ Z task weapons divert
 5 util cafeteria button
 6 util security cams
 7 util admin logs
-
-
+% wall 0 0
+. wall 0 0
+} wall 0 0
+{ wall 0 0
+| wall 0 0
+- wall 0 0
+/ wall 0 0
+\ wall 0 0
 
  
 
