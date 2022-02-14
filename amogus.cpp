@@ -50,7 +50,9 @@ void drawMap(std::vector<std::string> &gmap, int x, int y, bool camera) {
                 move(k+TOPOFFSET, i);
                 switch(gmap[k+y-(FOVY/2)].at(i+x-(FOVX/2))) {
                 case '%':
-                    printw("█");
+                    attron(COLOR_PAIR(14));
+                    printw(" ");
+                    attron(COLOR_PAIR(20));
                     break;
                 case '~':
                     if(camera) attron(COLOR_PAIR(21));
