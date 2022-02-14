@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
     //accept the incoming connection
     addrlen = sizeof(address);
     puts("Waiting for connections ...");
-
+    game.cameras = 0;
     while(TRUE)
     {
         //clear the socket set
@@ -156,6 +156,9 @@ int main(int argc, char *argv[])
                     //NEW CONNECTION
                     client_socket[i] = new_socket;
                     if(!game.ready[i]) {
+                        game.tasks[i].current = 0;
+                        game.tasks[i].done = 0;
+                        game.tasks[i].received = false;
                         game.position[i] = {137+2*i, 7, 1};
                         game.timer.kill[i] = INITIAL_KTIMEOUT;
                         game.ready[i] = false;
@@ -192,6 +195,8 @@ int main(int argc, char *argv[])
 
                     //Close the socket and mark as 0 in list for reuse
                     close( sd );
+                    game.tasks[i].received = false;
+                    game.tasks[i].current= 0;
                     client_socket[i] = 0;
                 }
 
@@ -200,11 +205,13 @@ int main(int argc, char *argv[])
 
                     if(buffer[0] == 'u') {//player asks for an update
                         //std::cout << "u" << i <<std::endl;
+                        if(game.timer.button)game.timer.button--;
                         if(game.timer.kill[i])game.timer.kill[i]--;
                         if(game.timer.voting) {
                             game.timer.voting--;
                             if(!game.timer.voting) {
                                 votesResult(game);
+                                
                                 cleanDeadBodies(game.position);
 
 
@@ -250,29 +257,52 @@ int main(int argc, char *argv[])
 
                     } else if(buffer[0] == 't'&& game.in_progress) {//player wants to do a task
                         char trigger;
-
+                        std::cout << "t"<<i;
                         if(game.position[i].status%2)
                             trigger = gamemap[game.position[i].y][game.position[i].x];
                         else
                             trigger = gamemap[game.ghosts[i].y][game.ghosts[i].x];
 
-
+                       
                         if(trigger!= ' ') {
+                             std::cout<<"Player "<<i<<":" << triggers[trigger][0]<<" "<<triggers[trigger][1]<<" "<<triggers[trigger][2]<<" "<<std::endl;
                             if(triggers[trigger][0]=="util") {
-                                if(triggers[trigger][2]=="button") { //emeregency meeting
+                                if(triggers[trigger][2]=="button"&&!game.timer.button) { //emeregency meeting
                                     game.timer.voting = game.position.size()*300;
                                     for(auto x : game.position) {
                                         if(x.second.status%2)game.votes[x.first] = -1;
                                         else game.votes[x.first] = -2;
                                     }
 
+                                } else if(triggers[trigger][2]=="cams") { //security cameras
+                                     if(game.position[i].status%2)game.tasks[i].current=trigger;
+                                    game.cameras++;
                                 }
+                            } else if(triggers[trigger][0]=="task") {
+                                if(game.position[i].status >>1%2==0&&game.tasks[i].list[trigger]){
+                                    game.tasks[i].current=trigger;
+                                     
+                                    std::cout << "This task is on the list"<<std::endl;
+                                    
+                                
+                                    
+                                }
+                                
                             }
-                            std::cout<<"Player "<<i<<":" << triggers[trigger][0]<<" "<<triggers[trigger][1]<<" "<<triggers[trigger][2]<<" "<<std::endl;
+                            
+                           
                         }
                         sendReply(sd, i, game);
 
-
+                    } else if(buffer[0] == 'd'&& game.in_progress) {//player has done a task
+                        game.tasks[i].done++;
+                        game.tasks[i].list[game.tasks[i].current] = 0;
+                        game.tasks[i].current = 0;
+                        //sendReply(sd, i, game);
+                    } else if(buffer[0] == 'f'&& game.in_progress) {//player has failed a task
+                        if(game.tasks[i].current=='6')game.cameras--;
+                        game.tasks[i].current = 0;
+                        //sendReply(sd, i, game);
                     } else if(buffer[0] == 'v') { //player votes
                         int attr = buffer[1]-'0';
                         if(attr<= game.votes.size()) {

@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
     }
     setlocale(LC_ALL, "");
     
-    
+    taskStruct tasks;
    std::map<char,std::vector<std::string>> triggers;
     std::vector<std::string> gamemap;
     std::vector<std::string> wallmap;
@@ -89,6 +89,12 @@ int main(int argc, char **argv) {
     init_pair(5, COLOR_YELLOW, COLOR_BLACK);
     init_pair(6, COLOR_BLUE, COLOR_BLACK);
     init_pair(7, COLOR_WHITE, COLOR_BLACK);
+    init_pair(21, COLOR_RED, COLOR_WHITE);
+    init_pair(22, COLOR_CYAN, COLOR_WHITE);
+    init_pair(23, COLOR_MAGENTA, COLOR_WHITE);
+    init_pair(24, COLOR_GREEN, COLOR_WHITE);
+    init_pair(25, COLOR_YELLOW, COLOR_WHITE);
+    init_pair(26, COLOR_BLUE, COLOR_WHITE);
     
     init_pair(8, COLOR_BLACK, COLOR_RED);
     init_pair(9, COLOR_BLACK, COLOR_CYAN );
@@ -97,6 +103,7 @@ int main(int argc, char **argv) {
     init_pair(12, COLOR_BLACK, COLOR_YELLOW);
     init_pair(13, COLOR_BLACK, COLOR_BLUE);
     init_pair(14, COLOR_BLACK, COLOR_WHITE );
+
     mvprintw(0,0, banner.c_str());
     getch();
     
@@ -125,7 +132,7 @@ int main(int argc, char **argv) {
     else
         cm = {"ඞ",  "🦴 ", "👻"};
     
-    await(sockfd, playertag, positions, ghst, gamemap,wallmap, cm, triggers, kb);
+    await(sockfd, playertag, positions, ghst, gamemap,wallmap, cm, triggers, kb, tasks);
    
     // close the socket
     endwin();

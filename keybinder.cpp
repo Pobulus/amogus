@@ -19,6 +19,7 @@ struct keyBinds {
     int use;
     int report;
     int ready;
+    int quit;
 };
 
 
@@ -83,6 +84,10 @@ int main() {
     c = getch();
     kb.ready= c;
     printw("%d [%c]\n", c, (char)c);
+    printw("Quit: ");
+    c = getch();
+    kb.quit= c;
+    printw("%d [%c]\n", c, (char)c);
     printw("Is this correct?");
     c = getch();
     if(c == 'y'||c=='Y') {
@@ -92,7 +97,7 @@ int main() {
             fileStream << kb.moveN << " " << kb.moveE << " " << kb.moveW << " " << kb.moveS;
             fileStream << " " << kb.moveNE << " " << kb.moveNW << " " << kb.moveSE << " " << kb.moveSW;
             fileStream << " " << kb.middle;
-            fileStream << " " << kb.kill << " " << kb.use << " " << kb.report << " " << kb.ready;
+            fileStream << " " << kb.kill << " " << kb.use << " " << kb.report << " " << kb.ready << " "<< kb.quit;
 
             fileStream.close();
              std::cout << " " <<"File exported as keybinds.txt."<<std::endl;

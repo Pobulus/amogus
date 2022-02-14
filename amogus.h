@@ -23,13 +23,15 @@
 #define TOPOFFSET 1
 #define FOVX 64
 #define FOVY 16
-#define RADIUS 30
+#define SIGHT_RADIUS 30
 #define ALIVE 1
 #define DEAD 0
 #define KILL_TIMEOUT 100
 #define KILL_RADIUS 7
-
-#define INITIAL_KTIMEOUT 100
+#define STARTING_POSITION_X 137
+#define STARTING_POSITION_Y 7
+#define INITIAL_KTIMEOUT 1200
+#define BUTTON_TIMEOUT 3000
 
 /**
  * Holds position and status of a player
@@ -64,6 +66,7 @@ struct keyBinds{
     int use;
     int report;
     int ready;
+    int quit;
 };
 
 /**
@@ -71,19 +74,27 @@ struct keyBinds{
  */
 struct countdown{
     std::map<int, unsigned int> kill;
-    int voting;
-    int button;
+    unsigned int voting;
+    unsigned int button;
     
+};
+struct taskStruct{
+    char current;
+    std::map<char, int> list;
+    int done;
+    bool received;
 };
 /**
  * Holds necessary game status like postitions and flags
  */
 struct status{
     std::map<int, crewmate> position;
+    std::map<int, taskStruct> tasks;
     std::map<int, crewmate> ghosts;
     std::map<int, int> votes;
     std::map<int, bool> ready;
     bool in_progress;
+    unsigned int cameras;
     countdown timer;
     int winner;
 };
@@ -158,7 +169,7 @@ std::vector<std::string> loadMap ( std::string mapname ) ;
  * @param x horizontal position
  * @param y vertical position
  */
-void drawMap(std::vector<std::string> &gmap, int x, int y);
+void drawMap(std::vector<std::string> &gmap, int x, int y, bool camera=false);
 
 /**
  * prints a file, replacing characters with specified colors. 
@@ -186,13 +197,14 @@ int distance(int x1, int y1, int x2, int y2);
  * @param offX box offset in x cooridnate (default: 0)
  * @param offY box offset in y cooridnate (default: 0)
  */
-void printCenter(std::string text, int limX, int limY, int offX=0, int offY=0);
+void printCenter(std::string text, const int limX, const int limY, const int offX=0, const int offY=0);
 
 /**
- * 
+ * Handles player input and communication with the server
  */
-void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewmate &ghost, std::vector<std::string> &gamemap, std::vector<std::string> &wallmap, playermodel model, std::map<char,std::vector<std::string>> &triggers, bool kb);
-
+void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewmate &ghost, std::vector<std::string> &gamemap, std::vector<std::string> &wallmap, playermodel model, std::map<char,std::vector<std::string>> &triggers, bool kb, taskStruct &tasks);
+void drawCharacters(const int x, const int y, std::map<int, crewmate>  &positions, std::vector<std::string> &wallmap, playermodel model);
+void printTasks(taskStruct &tasks, std::map<char,std::vector<std::string>> &triggers, bool impostor);
 std::map<char,std::vector<std::string>> loadLabels(std::string filename);
 void sendReply(int sd,int i,  status &game);
 void applyMovement(const char ch,  const int i, std::map<int, crewmate>&p, std::vector<std::string> &gamemap, const bool ghost);
@@ -200,3 +212,4 @@ void votesResult(status &game);
 void cleanDeadBodies(std::map<int, crewmate> &position);
 void startGame(status &game);
 bool collisionCheck(int id, std::map<int, crewmate> &pos, std::vector<std::string> &gamemap, bool ghost);
+bool handleTask(char taskName, std::map<char,std::vector<std::string>> &triggers, const keyBinds kBinds, std::map<int, crewmate>  &positions, std::vector<std::string> &gamemap,std::vector<std::string> &wallmap, playermodel model, int sockfd, int id);

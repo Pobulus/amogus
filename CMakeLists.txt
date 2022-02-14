@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(amogus)
-
-
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lncursesw")
+SET(CURSES_NEED_WIDE TRUE)
 find_package(Curses REQUIRED)
 include_directories(${CURSES_INCLUDE_DIR})
 
@@ -12,5 +12,4 @@ add_executable(server amogus-server-main.cpp amogus.cpp)
 target_link_libraries(server ${CURSES_LIBRARIES})
 add_executable(keybinder keybinder.cpp)
 target_link_libraries(keybinder ${CURSES_LIBRARIES})
-
 install(TARGETS amogus RUNTIME DESTINATION bin)
