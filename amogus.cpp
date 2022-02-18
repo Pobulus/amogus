@@ -42,6 +42,45 @@ void update_all(std::map<int, std::pair<int, int>>  &positions) {
     attron(COLOR_PAIR(20));
 
 }
+
+void drawCircle(const int x, const int y, const int r, std::string characters){
+    int x0 = (x-r);
+    int y0 = (y-r);
+    
+    for(int yi = 0; yi <= 2*r; yi++){
+        for(int xi = 0; xi <= 4*r; xi++){
+            int d = r - distance(x, y, x0+(xi), y0+yi);
+            
+            if(d>=0 and y0+yi<FOVY){
+                if(d>=characters.size())d=characters.size()-1;
+                mvprintw(y0+yi,x0+2*xi, "%c",  characters.at(d));
+            }
+        }
+    }
+}
+void drawAsteroid(const int x, const int y, const int r, std::string characters){
+    int x0 = (x-r);
+    int y0 = (y-r);
+    
+    for(int yi = 0; yi <= 2*r; yi++){
+        for(int xi = 0; xi <= 4*r; xi++){
+            int d = r - distance(x, y, x0+(xi), (y0+yi)*1.5);
+            
+            if(d>=0 and y0+yi<FOVY){
+                if(d>=characters.size())d=characters.size()-1;
+                mvprintw(y0+yi,x0+2*xi, "%c%c",  characters.at(d),characters.at(d));
+            }
+        }
+    }
+}
+void drawExplosion(const int x, const int y){
+    for(int r = 0; r < 8; r++){
+        drawCircle(x-r,y,r," @o. ");
+        wait(1);
+    }
+    
+}
+
 void drawMap(std::vector<std::string> &gmap, int x, int y, bool camera) {
 
     for(int i = 0; i < FOVX; i++) {
@@ -253,6 +292,25 @@ void drawBox(int x1, int y1, int w, int h, std::string type){
     mvprintw(y1+h, x1+w, frames[type][5].c_str());
     
 }
+void drawSquare(int x1, int y1, int w, int h, std::string character){
+    
+    
+    for(int j = 0; j < h;j++){
+        move(y1+j, x1);
+        for(int i = 0; i < w;i++){
+            printw(character.c_str());
+        }
+    }
+    
+    
+}
+void wait(int n){
+    while(n){
+    getch();
+    n--; 
+    }
+    
+}
 std::vector<std::string> loadMap ( std::string filename ) {
     std::vector<std::string> temp;
 
@@ -319,7 +377,237 @@ void drawTaskbar(int percent){
     mvprintw(0,FOVX,"]");
     
 }
-bool handleTask(taskStruct tasks, std::map<char,std::vector<std::string>> &triggers, const keyBinds kBinds, std::map<int, crewmate>  &positions, std::vector<std::string> &gamemap,std::vector<std::string> &wallmap, playermodel model, int sockfd, int id){
+void drawHexagon(int x, int y){
+    mvprintw(y, x+2,   "_____");
+    mvprintw(y+1, x+1,"╱");
+    mvprintw(y+2, x, "╱");
+    mvprintw(y+1, x+7,        "╲");
+    mvprintw(y+2, x+8,         "╲");
+    mvprintw(y+3, x+8,         "╱");
+    mvprintw(y+3, x,  "╲");
+    mvprintw(y+4, x+1, "╲_____╱");
+    
+    
+}
+void drawTesttube(int x, int y){
+    for(int i = 0; i<6;i++){
+        mvprintw(y+i, x, "│");
+        mvprintw(y+i, x+6, "│");
+    }
+//     mvprintw(y+6, x, "╲");
+    mvprintw(y+6, x, "╰─────╯");
+//     mvprintw(y+6, x+5, "╱");
+    
+}
+void drawPipet(int x, int y){
+    for(int i = 0; i<4;i++){
+        mvprintw(y+i, x, "│");
+        mvprintw(y+i, x+2, "│");
+    }
+//     mvprintw(y+6, x, "╲");
+    mvprintw(y+4, x, "\\ /");
+    mvprintw(y+5, x, " v");
+//     mvprintw(y+6, x+5, "╱");
+    
+}
+bool handleVent(taskStruct tasks, std::map<char,std::vector<std::string>> &triggers, const keyBinds kBinds, std::map<int, crewmate>  &positions, std::vector<std::string> &gamemap,std::vector<std::string> &wallmap, playermodel model, int sockfd, int id){
+    std::map<char, std::pair<int, int>> vent_positions= {
+        {'a', {58, 12}},
+        {'b', {10, 31}},
+        {'c', {20, 44}},
+        {'d', {58, 64}},
+        {'e', {74, 45}},
+        {'f', {88, 34}},
+        {'g', {96, 47}},
+        {'h', {210, 40}},
+        {'i', {178, 24}},
+        {'j', {178, 53}},
+        {'k', {209, 8}},
+        {'l', {250, 31}},
+        {'m', {250, 43}},
+        {'n', {212, 73}},
+    };
+    int ch;
+    bool ventloop = true;
+    char buff[MAX];
+    bool result = false;
+    clear();    
+    while(ventloop){
+        ch = getch();
+        if(ch == kBinds.quit){
+            ventloop = false;
+            result = false;
+        } else if(ch == kBinds.use){
+            ventloop = false;
+            result = true;
+        }
+        bzero(buff, sizeof(buff));
+        strcpy(buff, "u\n");
+        write(sockfd, buff, sizeof(buff));
+        bzero(buff, sizeof(buff));
+        read(sockfd, buff, sizeof(buff));
+        //mvprintw(FOVY+1,0,"From Server : %s   ", buff);
+        std::stringstream decoder;
+        decoder << buff;
+        int a=0, b=0, c=0, cnt=0;
+        char mode;
+        int other;
+        decoder >> mode >> other;
+        move(FOVY+2, 0);
+        while(decoder >> a >> b >> c) {
+            positions[cnt] = {a, b, c};
+            cnt++;
+        }
+        drawMap(gamemap, vent_positions[tasks.current].first, vent_positions[tasks.current].second);
+        
+       drawCharacters( vent_positions[tasks.current].first, vent_positions[tasks.current].second, positions, wallmap,model);
+        if(!positions[id].status){
+            attron(COLOR_PAIR(id+1));
+            mvprintw((FOVY/2)+TOPOFFSET, (FOVX/2), model.ghost.c_str());
+            attron(COLOR_PAIR(20));
+        }
+    }
+
+    return result;
+}
+void drawRing(const int x, const int y, const int angle, const int color){
+   attron(COLOR_PAIR(color));
+    mvaddch(y, x+4, '*');
+    mvaddch(y, x+5, '*');
+    mvaddch(y, x+6, '*');
+    mvaddch(y, x+7, '*');
+    mvaddch(y, x+8, '*');
+    mvaddch(y, x+9, '*');
+    mvaddch(y, x+10, '*');
+    mvaddch(y+1, x+11, '*');
+    mvaddch(y+1, x+12, '*');
+    mvaddch(y+2, x+13, '*');
+    mvaddch(y+3, x+14, '*');
+    mvaddch(y+4, x+14, '*');
+    mvaddch(y+5, x+14, '*');
+    mvaddch(y+6, x+13, '*');
+    mvaddch(y+7, x+12, '*');
+    mvaddch(y+7, x+11, '*');
+    mvaddch(y+8, x+10, '*');
+    mvaddch(y+8, x+9, '*');
+    mvaddch(y+8, x+8, '*');
+    mvaddch(y+8, x+7, '*');
+    mvaddch(y+8, x+6, '*');
+    mvaddch(y+8, x+5, '*');
+    mvaddch(y+8, x+4, '*');
+    mvaddch(y+7, x+3, '*');
+    mvaddch(y+7, x+2, '*');
+    mvaddch(y+6, x+1, '*');
+    mvaddch(y+5, x, '*');
+    mvaddch(y+4, x, '*');
+    mvaddch(y+3, x, '*');
+    mvaddch(y+2, x+1, '*');
+    mvaddch(y+1, x+2, '*');
+    mvaddch(y+1, x+3, '*');
+    attron(COLOR_PAIR(20));
+   switch(angle%32){
+        case 0:
+            mvaddch(y, x+4, '*');
+        break;
+        case 1:
+            mvaddch(y, x+5, '*');
+        break;
+        case 2:
+            mvaddch(y, x+6, '*');
+        break;
+        case 3:
+        mvaddch(y, x+7, '*');
+        break;
+        case 4:
+        mvaddch(y, x+8, '*');
+        break;
+        case 5:
+        mvaddch(y, x+9, '*');
+        break;
+        case 6:
+        mvaddch(y, x+10, '*');
+        break;
+        case 7:        
+        mvaddch(y+1, x+11, '*');
+        break;
+        case 8:        
+        mvaddch(y+1, x+12, '*');
+        break;
+        case 9:        
+        mvaddch(y+2, x+13, '*');
+        break;
+        case 10:        
+        mvaddch(y+3, x+14, '*');
+        break;
+        case 11:        
+        mvaddch(y+4, x+14, '*');
+        break;
+        case 12:        
+        mvaddch(y+5, x+14, '*');
+        break;
+        case 13:        
+        mvaddch(y+6, x+13, '*');
+        break;
+        case 14:        
+        mvaddch(y+7, x+12, '*');
+        break;
+        case 15:        
+        mvaddch(y+7, x+11, '*');
+        break;
+        case 16:        
+        mvaddch(y+8, x+10, '*');
+        break;
+        case 17:        
+        mvaddch(y+8, x+9, '*');
+        break;
+        case 18:        
+        mvaddch(y+8, x+8, '*');
+        break;
+        case 19:        
+        mvaddch(y+8, x+7, '*');
+        break;
+        case 20:        
+        mvaddch(y+8, x+6, '*');
+        break;
+        case 21:        
+        mvaddch(y+8, x+5, '*');
+        break;
+        case 22:        
+        mvaddch(y+8, x+4, '*');
+        break;
+        case 23:        
+        mvaddch(y+7, x+3, '*');
+        break;
+        case 24:        
+        mvaddch(y+7, x+2, '*');
+        break;
+        case 25:        
+        mvaddch(y+6, x+1, '*');
+        break;
+        case 26:        
+        mvaddch(y+5, x, '*');
+        break;
+        case 27:        
+        mvaddch(y+4, x, '*');
+        break;
+        case 28:        
+        mvaddch(y+3, x, '*');
+        break;
+        case 29:        
+        mvaddch(y+2, x+1, '*');
+        break;
+        case 30:        
+        mvaddch(y+1, x+2, '*');
+        break;
+        case 31:        
+        mvaddch(y+1, x+3, '*');
+        break;
+   }
+}
+int randInt( int low, int high){
+    return low+rand()%(high-low);
+}
+bool handleTask(taskStruct tasks, std::map<char,std::vector<std::string>> &triggers, const keyBinds kBinds, std::map<int, crewmate>  &positions, std::vector<std::string> &gamemap,std::vector<std::string> &wallmap, playermodel model, int sockfd, int id, int &sample_countdown){
     int  cdown = 18;
     char taskName = tasks.current;
     if(triggers[taskName][2]=="upload"){
@@ -345,11 +633,652 @@ bool handleTask(taskStruct tasks, std::map<char,std::vector<std::string>> &trigg
             taskload--;
             
         }
+        attron(COLOR_PAIR(4));
+        printCenter("          Task completed!          ", FOVX, FOVY/2);
+        wait(20);
+        clear();
+//         return true;
+    }else if(triggers[taskName][2]=="clear"){
+        clear();
+        bool taskloop = true, shoot=false;
+        int curX = FOVX/2;
+        int curY = FOVY/2;
+        int ch;
+        crewmate a,b,c;
+        a = {randInt(2, FOVX/4), randInt(2, FOVY/2), randInt(4, 6)};
+        b = {randInt(1+FOVX/4, 2*(FOVX/4)), randInt(FOVY/2, FOVY-2), randInt(4, 6)};
+        c = {randInt(1+2*(FOVX/4), 3*FOVX/4), randInt(2, FOVY/2), randInt(4, 6)};
+        int aimed;
+        
+        while(taskloop){
+            ch = getch();
+            if(ch == kBinds.quit){
+                clear();
+                return false;
+            }else if(ch == kBinds.moveN){
+                if(curY>1)curY--;
+            }else if(ch == kBinds.moveS){
+                if(curY<FOVY)curY++;
+            }else if(ch == kBinds.moveW){
+                if(curX>1)curX--;
+            }else if(ch == kBinds.moveE){
+                if(curX<FOVX-1)curX++;
+            } else if(ch == kBinds.moveNE){
+                if(curY>1)curY--;
+                if(curX<FOVX-1)curX++;
+            }else if(ch == kBinds.moveNW){
+                if(curY>1)curY--;
+                 if(curX>1)curX--;
+            }else if(ch == kBinds.moveSE){
+                if(curY<FOVY-1)curY++;
+                if(curX<FOVX-1)curX++;
+            }else if(ch == kBinds.moveSW){
+            
+                if(curY<FOVY-1)curY++;
+                if(curX>1)curX--;
+            }else if(ch == kBinds.use){
+                shoot = true;
+            }
+            if(ch!=ERR)clear();
+            drawAsteroid(a.x, a.y, a.status, "@");
+            drawAsteroid(b.x, b.y, b.status, "*");
+            drawAsteroid(c.x, c.y, c.status, "#");
+            for(int x = 0; x<FOVX; x++){
+                mvaddch(curY, x, '-');
+            }
+            for(int y = 0; y<FOVY; y++){
+                mvaddch(y, curX, '|');
+            }
+            mvprintw(curY, curX, "+");
+            mvprintw(FOVY+1, 0, "%d", aimed);
+            //mvprintw(FOVY+2, 0, "%d %d %d %d", mvinch(curY-1,curX-1)&A_CHARTEXT,mvinch(curY+1,curX-1)&A_CHARTEXT,mvinch(curY-1,curX+1)&A_CHARTEXT,mvinch(curY+1,curX+1)&A_CHARTEXT);
+            drawBox(0,0,FOVX, FOVY, "bold");
+            if(shoot){
+                shoot = false;
+                /*
+                 * Basically what we do here is checking corner cells around the crosshair, if all of them are the same character, 
+                 * we remove the asteroid made with this character
+                 */
+                aimed = (mvinch(curY-1,curX-1)&A_CHARTEXT)+(mvinch(curY+1,curX-1)&A_CHARTEXT)+(mvinch(curY-1,curX+1)&A_CHARTEXT)+(mvinch(curY+1,curX+1)&A_CHARTEXT);
+                
+                if(aimed/4=='@'){
+                    a.status = 0;
+                    attron(COLOR_PAIR(5));
+                    drawExplosion(curX, curY);
+                    attron(COLOR_PAIR(20));
+                    clear();
+                }else if(aimed/4=='*'){
+                    b.status = 0;
+                    attron(COLOR_PAIR(5));
+                    drawExplosion(curX, curY);
+                    attron(COLOR_PAIR(20));
+                    clear();
+                }else if(aimed/4=='#'){
+                    c.status = 0;
+                    attron(COLOR_PAIR(5));
+                    drawExplosion(curX, curY);
+                    attron(COLOR_PAIR(20));
+                    clear();
+                }
+               if(a.status+b.status+c.status == 0){
+                   taskloop = false;
+                } 
+            }
+        }
+        attron(COLOR_PAIR(20));
+        printCenter("Task completed!", FOVX, FOVY/2);
+        wait(20);
+        clear();
+        return true;
+    }else if(triggers[taskName][2]=="clean"){
+        bool taskloop = true;
+        clear();
+        int ch;
+        int y=FOVY/2;
+        std::vector<std::pair<int, int>> gusts;
+        std::map<int, int> leaves;
+        for(int i = 1; i < FOVY; i++){
+            leaves[i] = randInt(0, FOVX-2);
+        }
+        while(taskloop){
+            ch = getch();
+            if(ch == kBinds.quit){
+                clear();
+                return false;
+            } else if(ch == kBinds.moveN){
+                if(y>1)y--;
+            } else if(ch == kBinds.moveS){
+                if(y<FOVY-1)y++;
+            } else if(ch == kBinds.use){
+                gusts.push_back({FOVX-2, y});
+            }
+            
+            for(int i = 0;i< gusts.size(); i++){
+                
+                gusts[i].first--;
+                if(leaves[gusts[i].second]>0){
+                    if(leaves[gusts[i].second] == gusts[i].first){
+                        leaves[gusts[i].second]--;
+                    }
+                }
+                attron(COLOR_PAIR(2));
+                mvprintw(gusts[i].second, gusts[i].first, "( " );
+                if(gusts[i].first<0){
+                    gusts.erase(gusts.begin()+i);
+                }
+                
+            }
+            int over = 0;
+            for(auto leaf: leaves){
+                attron(COLOR_PAIR(4));
+                if(leaf.second>0){
+                    over++;
+                    mvprintw(leaf.first, leaf.second, "$");
+                }
+            }
+            
+            attron(COLOR_PAIR(5));
+            
+            mvprintw(y, FOVX-1, "{");
+            mvprintw(y+1, FOVX-1, " ");
+            mvprintw(y-1, FOVX-1, " ");
+            attron(COLOR_PAIR(20));
+            drawBox(0,0, FOVX, FOVY,"double");
+            for(int i = 1; i<FOVY; i++){
+                mvaddch(i, 0, '#');
+            }
+                
+            if(!over){
+                taskloop = false;
+            }
+        }
+        attron(COLOR_PAIR(20));
+        printCenter("Task completed!", FOVX, FOVY/2);
+        wait(20);
+        clear();
+        return false;
+    }else if(triggers[taskName][2]=="calibrate"){
+        int ch; 
+        int delay = 2;
+        clear();
+        int stage = 0;
+        int a=0, b=0, c=0;
+        bool taskloop = true;
+        int chosen = 0;
+        bool pressed = false;
+        while(taskloop){
+            ch = getch();
+            if(ch == kBinds.quit){
+                clear();
+                return false;
+            } else if(ch == kBinds.use){
+                chosen = 1;
+                
+            }else{
+                chosen = 0;
+                pressed = false;
+            }
+            drawBox(0,0,FOVX, 11, "double");
+            drawBox(0,12,FOVX, 6, "basic");
+            
+            drawRing(2, 1, a, 5);
+            drawRing(22, 1, b, 6);
+            drawRing(42, 1, c, 2);
+            mvaddch(10, 9, '^');
+            mvaddch(10, 29, '^');
+            mvaddch(10, 49, '^');
+            wait(delay);
+            drawBox(2, 13, 14, 3, "basic");
+            drawBox(22, 13, 14, 3, "basic");
+            drawBox(42, 13, 14, 3, "basic");
+            switch(stage){
+                case 0:
+                    a++;
+                    attron(COLOR_PAIR(11));
+                    drawSquare(3, 17, 13, 1, " ");
+                    if(chosen&&!pressed){
+                        pressed = true;
+                        if(a%32>17&&a%32<21){
+                            stage=1;
+                            attron(COLOR_PAIR(12));
+                            drawSquare(3, 14, 13, 2, " ");
+                            attron(COLOR_PAIR(20));
+                            drawSquare(3, 17, 13, 1, " ");
+                        }
+                    }
+                break;
+                case 1:
+                    b++;
+                    attron(COLOR_PAIR(11));
+                    drawSquare(23, 17, 13, 1, " ");
+                    if(chosen&&!pressed){
+                        pressed = true;
+                        if(b%32>17&&b%32<21){
+                            stage=2;
+                            attron(COLOR_PAIR(13));
+                            drawSquare(23, 14, 13, 2, " ");
+                            attron(COLOR_PAIR(20));
+                            drawSquare(23, 17, 13, 1, " ");
+                        }
+                    }
+                break;
+                case 2:
+                    c++;
+                    attron(COLOR_PAIR(11));
+                    drawSquare(43, 17, 13, 1, " ");
+                    if(chosen&&!pressed){
+                        pressed = true;
+                        
+                        if(c%32>17&&c%32<21){
+                            attron(COLOR_PAIR(9));
+                            drawSquare(43, 14, 13, 2, " ");
+                            taskloop = false;
+                        }
+                    }
+                break;
+            }
+            attron(COLOR_PAIR(20));
+            
+        }
+        printCenter("Task completed!", FOVX, FOVY/2);
+        wait(20);
+        clear();
+        return true;
+    }else if(triggers[taskName][2]=="prime"){
+        int ch;
+        bool taskloop = true;
+        clear();
+        std::vector<int> to_choose = {1,2,3,5,7,8,9};
+        std::map<int, crewmate> hexagons;
+        hexagons[8] = {29, 1, 0};
+        hexagons[2] = {29, 9, 0};
+        hexagons[5] = {29, 5, 0};
+        hexagons[7] = {22, 3, 0};
+        hexagons[9] = {36, 3, 0};
+        hexagons[1] = {22, 7, 0};
+        hexagons[3] = {36, 7, 0};
+        
+//         drawHexagon(29, 1);
+        for(auto &h : hexagons){
+            drawHexagon(h.second.x, h.second.y);
+            mvprintw(h.second.y+2, h.second.x+4, "%d", h.first);
+        }
+        int cnt = 0;
+        attron(COLOR_PAIR(1));
+        for(int i = 0; i<3;i++){
+            int r = rand()%to_choose.size();
+            int R = to_choose[r];
+            hexagons[R].status = 1;
+            drawHexagon(hexagons[R].x, hexagons[R].y);
+            to_choose.erase(to_choose.begin()+r);
+            cnt++;
+        }
+        attron(COLOR_PAIR(20));
+        int c = 0;
+        while(taskloop){
+            ch = getch();
+            if(ch == kBinds.quit){
+                clear();
+                return false;
+            }else if(ch == kBinds.moveNW){
+                c = 7;
+            }else if(ch == kBinds.moveN){
+                c = 8;
+            }else if(ch == kBinds.moveNE){
+                c = 9;
+            }else if(ch == kBinds.middle){
+                c = 5;
+            }else if(ch == kBinds.moveSW){
+                c = 1;
+            }else if(ch == kBinds.moveS){
+                c = 2;
+            }else if(ch == kBinds.moveSE){
+                c = 3;
+                
+            }else{
+                c = ch-'0';
+            }
+            if(hexagons[c].status){
+                hexagons[c].status = 0;
+                drawHexagon(hexagons[c].x, hexagons[c].y);
+                attron(COLOR_PAIR(1));
+                for(auto &h : hexagons){
+                    if(h.second.status)
+                        drawHexagon(h.second.x, h.second.y);
+                    
+                }
+                attron(COLOR_PAIR(20));
+                cnt--;
+                if(!cnt)taskloop = false;
+            }
+        }
+        attron(COLOR_PAIR(20));
+        printCenter("Task completed!", FOVX, FOVY/2);
+        wait(20);
+        clear();
+        return true;
+        
+    }else if(triggers[taskName][2]=="empty"){
+        int ch, y=0, t = 0;
+        int r = 2+rand()%5;
+        int x = 9+rand()%18;
+        int rb = 2+rand()%5;
+        int xb = 9+rand()%18;
+        bool taskloop = true;
+        clear();
+        while(taskloop){
+            ch = getch();
+            if(ch == kBinds.quit){
+                clear();
+                return false;
+            }else if(ch == kBinds.moveN||ch == ERR){
+                if(t>0)t--;
+            }else if(ch == kBinds.moveS){
+                if(t<FOVY)t++;
+                if(t==FOVY)taskloop = false;
+            }
+            
+            attron(COLOR_PAIR(4));
+            drawCircle(x, FOVY-1-r, r, "@0Oo.");
+            attron(COLOR_PAIR(2));
+            drawCircle(xb, FOVY-1-rb, rb, ".oO0@");
+            attron(COLOR_PAIR(20));
+            drawBox(1, 1, 3*(FOVX/4), FOVY-1, "basic");
+            for(int i = 0; i<=FOVY; i++){
+//                 mvprintw(i, 3*(FOVXe/4)+6, "  #  ");
+            }
+             attron(COLOR_PAIR(1));
+             mvprintw(t, 3*(FOVX/4)+6, "[===]");
+             attron(COLOR_PAIR(20));
+        }
+        
         while(cdown){
             getch();
+            
+            clear();
+            attron(COLOR_PAIR(4));
+            drawCircle(x, FOVY-1-r+y, r, "@0Oo. ");
+            attron(COLOR_PAIR(2));
+            drawCircle(xb, FOVY-1-rb+y, rb, ".oO0@");
             printCenter("     Task completed!     ", FOVX, FOVY/2);
-            cdown--;
+            attron(COLOR_PAIR(20));
+            drawBox(1, 1, 3*(FOVX/4), FOVY-1, "basic");
+            for(int i = 0; i<=FOVY; i++){
+                mvprintw(i, 3*(FOVX/4)+6, "  #  ");
+            }
+             attron(COLOR_PAIR(1));
+             mvprintw(FOVY, 3*(FOVX/4)+6, "<===>");
+             attron(COLOR_PAIR(20));
+            cdown--;y++;
         }
+        clear();
+        
+    }else if(triggers[taskName][2]=="stabilize"){
+        
+        int curX, curY;
+        srand(time(NULL));
+        curX = FOVX/4+rand()%(FOVX/2);
+        curY = 2+rand()%(FOVY-4);
+        bool taskloop = true;
+        int ch;
+        while(taskloop){
+            clear();
+            drawCircle(FOVX/2-(FOVY/2)+1, FOVY/2, FOVY/2-1, "*    ");
+            
+            for(int x = 0; x<FOVX; x++){
+                mvaddch(curY, x, '-');
+            }
+            for(int y = 0; y<FOVY; y++){
+                mvaddch(y, curX, '|');
+            }
+            mvprintw(curY, curX, "+");
+            mvprintw(FOVY/2, FOVX/2, "+");
+            if(curX==(int)FOVX/2&&curY==(int)FOVY/2)
+                taskloop = false;
+            ch = getch();
+            if(ch == kBinds.quit){
+                clear();
+                return false;
+            }else if(ch == kBinds.moveN){
+                if(curY>0)curY--;
+            }else if(ch == kBinds.moveS){
+                if(curY<FOVY)curY++;
+            }else if(ch == kBinds.moveW){
+                if(curX>0)curX--;
+            }else if(ch == kBinds.moveE){
+                if(curX<FOVX)curX++;
+            } else if(ch == kBinds.moveNE){
+                if(curY>0)curY--;
+                if(curX<FOVX)curX++;
+            }else if(ch == kBinds.moveNW){
+                if(curY>0)curY--;
+                 if(curX>0)curX--;
+            }else if(ch == kBinds.moveSE){
+                if(curY<FOVY)curY++;
+                if(curX<FOVX)curX++;
+            }else if(ch == kBinds.moveSW){
+                if(curY<FOVY)curY++;
+                if(curX>0)curX--;
+            }
+        }
+        attron(COLOR_PAIR(4));
+        for(int x = 0; x<FOVX; x++){
+            mvaddch(curY, x, '-');
+        }
+        for(int y = 0; y<FOVY; y++){
+            mvaddch(y, curX, '|');
+        }
+        mvprintw(curY, curX, "+");
+        attron(COLOR_PAIR(20));
+        printCenter("Task completed!", FOVX, FOVY/2);
+        wait(20);
+        clear();
+        return true;
+        
+        
+    }else if(triggers[taskName][2]=="start"){
+        
+        bool taskloop =true;
+        int ch;
+        clear();
+        int xOffset = 0;
+        int xOffset2 = 31;
+        std::vector<int> to_choose = {0,1,2,3,4,5,6,7,8};
+        std::vector<int> combination;
+        srand(time(NULL));
+        for(int i=0;i<5;i++){
+            int r = rand()%to_choose.size();
+            combination.push_back(to_choose[r]);
+        }
+        drawBox(xOffset, 1, 29, 15, "double");
+        
+        mvprintw(0,0, " [ ]   [ ]   [ ]   [ ]   [ ]");
+        for(int y =0; y<3;y++){
+            for(int x = 0; x<3;x++){
+                attron(COLOR_PAIR(13));
+                drawSquare(xOffset+1+10*x, 2+5*y, 8,4," ");
+                attron(COLOR_PAIR(20));
+            }
+        }
+        drawBox(xOffset2, 0, 30, 16, "rounded");
+        
+        for(int y =0; y<3;y++){
+            for(int x = 0; x<3;x++){
+                attron(COLOR_PAIR(6));
+                drawBox(xOffset2+1+10*x, 1+5*y, 8,4,"basic");
+                attron(COLOR_PAIR(20));
+                mvprintw(3+5*y, xOffset2+5+10*x, "%d",y*3+x+1);
+            }
+        }
+        int chosen = -1;
+        int stage = 1;
+        int current = 0;
+        bool show=true;
+        bool pressed = false;
+        while(taskloop){
+            if(show){
+                wait(5);
+                for(int y =0; y<3;y++){
+                    for(int x = 0; x<3;x++){
+                        attron(COLOR_PAIR(6));
+                        drawBox(xOffset2+1+10*x, 1+5*y, 8,4,"basic");
+                    }
+                }
+                
+                
+                for(int i = 0; i<stage; i++ ){
+                    wait(2);
+                    attron(COLOR_PAIR(21));
+                    drawSquare(xOffset+1+10*(combination[i]%3), 2+5*((int)combination[i]/3), 8,4," ");
+                    wait(10);
+                    attron(COLOR_PAIR(13));
+                    drawSquare(xOffset+1+10*(combination[i]%3), 2+5*((int)combination[i]/3), 8,4," ");
+                }
+                show = false;
+            }
+            ch = getch();
+            if(ch==kBinds.quit){
+                clear();
+                return false;
+            }else if(ch == kBinds.moveNW){
+                chosen = 0;
+            }else if(ch == kBinds.moveN){
+                chosen = 1;
+            }else if(ch == kBinds.moveNE){
+                chosen = 2;
+            }else if(ch == kBinds.moveW){
+                chosen = 3;
+            }else if(ch == kBinds.middle){
+                chosen = 4;
+            }else if(ch == kBinds.moveE){
+                chosen = 5;
+            }else if(ch == kBinds.moveSW){
+                chosen = 6;
+            }else if(ch == kBinds.moveS){
+                chosen = 7;
+            }else if(ch == kBinds.moveSE){
+                chosen = 8;
+            }else if(ch == ERR){
+                chosen = -1;
+               
+            }
+            if(chosen>-1){
+                pressed = true;
+                attron(COLOR_PAIR(2));
+                drawBox(xOffset2+1+10*(chosen%3), 1+5*((int)chosen/3), 8,4,"bold");
+                if(combination[current] == chosen){
+                    
+                    current++;
+                    if(current == stage){
+                        
+                        attron(COLOR_PAIR(4));
+                        mvaddch(0, 2+6*(stage-1), '*');
+                        stage++;
+                        current = 0;
+                        show = true;
+                        if(stage > combination.size()){
+                            taskloop = false;
+                        }
+                    }
+                }else{
+                    if(pressed){
+                        current = 0;
+                        stage = 1;
+                        show = 1;
+                        attron(COLOR_PAIR(20));
+                        mvprintw(0,0, " [ ]   [ ]   [ ]   [ ]   [ ]");
+                    }
+                }
+            
+            }else{
+                 pressed = false;
+                for(int y =0; y<3;y++){
+                    for(int x = 0; x<3;x++){
+                        attron(COLOR_PAIR(6));
+                        drawBox(xOffset2+1+10*x, 1+5*y, 8,4,"basic");
+                    }
+                }
+            }
+        }
+        attron(COLOR_PAIR(20));
+        printCenter("Task completed!", FOVX, FOVY/2);
+        wait(20);
+        clear();
+        return true;
+        
+    }else if(triggers[taskName][2]=="unlock"){
+        clear();
+        int xOffset = 16;
+        int ch;
+        std::map<int, int>pressed;
+        std::vector<int> to_choose = {1,2,3,4,5,6,7,8,9};
+        std::vector<int> combination;
+        while(to_choose.size()){
+            int r = rand()%to_choose.size();
+            combination.push_back(to_choose[r]);
+            to_choose.erase(to_choose.begin()+r);
+        }
+        
+        drawBox(xOffset, 0, 30, 16, "rounded");
+        
+        for(int y =0; y<3;y++){
+            for(int x = 0; x<3;x++){
+                attron(COLOR_PAIR(6));
+                drawBox(xOffset+1+10*x, 1+5*y, 8,4,"basic");
+                attron(COLOR_PAIR(20));
+                mvprintw(3+5*y, xOffset+5+10*x, "%d",combination[y*3+x]);
+            }
+        }
+        int chosen = -1;
+        int next = 1;
+        bool taskloop = true;
+        while(taskloop){
+            ch = getch();
+            if(ch == kBinds.quit){
+                clear();
+                return false;
+            }else if(ch == kBinds.moveNW){
+                chosen = 0;
+            }else if(ch == kBinds.moveN){
+                chosen = 1;
+            }else if(ch == kBinds.moveNE){
+                chosen = 2;
+            }else if(ch == kBinds.moveW){
+                chosen = 3;
+            }else if(ch == kBinds.middle){
+                chosen = 4;
+            }else if(ch == kBinds.moveE){
+                chosen = 5;
+            }else if(ch == kBinds.moveSW){
+                chosen = 6;
+            }else if(ch == kBinds.moveS){
+                chosen = 7;
+            }else if(ch == kBinds.moveSE){
+                chosen = 8;
+            }
+            if(!pressed[chosen]){
+                if(combination[chosen]== next){
+                    next++;
+                    pressed[chosen] = 1;
+                    attron(COLOR_PAIR(2));
+                    drawBox(xOffset+1+10*(chosen%3), 1+5*((int)chosen/3), 8,4,"bold");
+                    
+                    if(next == 10)taskloop = false;
+                }else{
+                    next = 1;
+                    pressed.clear();
+                    for(int y =0; y<3;y++){
+                        for(int x = 0; x<3;x++){
+                            attron(COLOR_PAIR(6));
+                            drawBox(xOffset+1+10*x, 1+5*y, 8,4,"basic");
+                        }
+                    }
+                }
+            }
+        }
+        attron(COLOR_PAIR(20));
+        printCenter("Task completed!", FOVX, FOVY/2);
+        wait(20);
         clear();
         return true;
     }else if(triggers[taskName][2]=="divert"){
@@ -408,11 +1337,9 @@ bool handleTask(taskStruct tasks, std::map<char,std::vector<std::string>> &trigg
              drawBox(1,(FOVY/2),FOVX-2, (FOVY/2)-1, "double");
             
         }
-        while(cdown){
-            getch();
-            printCenter("     Task completed!     ", FOVX, FOVY/2);
-            cdown--;
-        }
+        attron(COLOR_PAIR(20));
+        printCenter("Task completed!", FOVX, FOVY/2);
+        wait(20);
         clear();
         return true;
     }else if(triggers[taskName][2]=="cams"){
@@ -458,6 +1385,273 @@ bool handleTask(taskStruct tasks, std::map<char,std::vector<std::string>> &trigg
             drawBox(0,0, FOVX, FOVY, "bold");
             printCenter("Camera: "+std::to_string(cam+1), FOVX, 1);
         }
+    }else if(triggers[taskName][2]=="card"){
+        bool taskloop = true;
+        int ch, x = 0;
+        int w = 25;
+        clear();
+        while(taskloop){
+            ch = getch();
+            if(ch==kBinds.moveE){
+                if(x<FOVX-w)x++;
+            }else if(ch==kBinds.moveW){
+                if(x>0)x--;
+            }else if(ch==kBinds.quit){
+                clear();
+                return false; 
+            }
+            attron(COLOR_PAIR(20));
+            drawSquare(1+x, FOVY/3, w+3, FOVY/2+1, " ");
+            drawBox(3+x, FOVY/3+1, 6, 3, "basic");
+            
+            mvprintw(FOVY/3+1, 10+x, "CREWMATE ID");
+            drawBox(2+x, FOVY/3, w, FOVY/2, "rounded");
+            attron(COLOR_PAIR(id+1));
+            mvprintw(FOVY/3+2, 4+x, "▄███▖");
+            mvprintw(FOVY/3+3, 4+x, "   █▌");
+            attron(COLOR_PAIR(id+51));
+            mvprintw(FOVY/3+3, 4+x, "▙▄▟");
+            attron(COLOR_PAIR(21));
+            drawSquare(3+x, FOVY/2+3, w-1, 2, " ");
+            attron(COLOR_PAIR(13));
+            drawSquare(2*(FOVX/5)+4, 2*(FOVY/3), FOVX/5, FOVY/3, " ");
+            
+            mvprintw(2*(FOVY/3), 2*(FOVX/5)+5, "CardScaner");
+            if(x==FOVX-w){
+                taskloop = false;
+            }
+            
+        }
+        attron(COLOR_PAIR(20));
+        printCenter("Task completed!", FOVX, FOVY/2);
+        wait(20);
+        clear();
+        return true;
+    }else if(triggers[taskName][2]=="chart"){
+        bool taskloop = true;
+        std::pair<int, int> A = {2+rand()%(FOVX/3), 2+rand()%(FOVY/2)};
+        std::pair<int, int> B = {(FOVX/3)+rand()%(FOVX/3), (FOVY/2)+rand()%(FOVY/2-2)};
+        std::pair<int, int> C = {(FOVX/3*2)+rand()%(FOVX/3), 2+rand()%(FOVY/2)};
+        int ch, curY=A.second, curX=A.first;
+        clear();
+        attron(COLOR_PAIR(5));
+        for(int i = 0; i <10;i++){
+            mvprintw(2+rand()%(FOVY-4), 3+(rand()%(FOVX/10))*i, "*" );
+        }
+        attron(COLOR_PAIR(20));
+        while(taskloop){
+            ch = getch();
+            if(curX==A.first){
+                if(ch == kBinds.moveN){
+                    if(curY>A.second)
+                        curY--;
+                }else if(ch == kBinds.moveS){
+                    if(curY<B.second)
+                        curY++;
+                }
+            }
+            if(curX==B.first){
+                if(ch == kBinds.moveN){
+                    if(curY>C.second)
+                        curY--;
+                }else if(ch == kBinds.moveS){
+                    if(curY<B.second)
+                        curY++;
+                }                
+            }
+            if(curY==B.second){
+                if(ch == kBinds.moveW){
+                    if(curX>A.first)curX--;
+                }else if(ch == kBinds.moveE){
+                    if(curX<B.first)curX++;
+                }
+            }
+            if(curY==C.second){
+                if(ch == kBinds.moveW){
+                    if(curX>B.first)curX--;
+                }else if(ch == kBinds.moveE){
+                    if(curX<C.first)curX++;
+                }
+            }
+            if(ch==kBinds.quit){
+                clear();
+                return false; 
+            }
+            
+            for(int y = A.second; y<B.second;y++){
+                 mvprintw(y, A.first, "│");
+                
+            }
+            for(int x = A.first; x<B.first;x++){
+                 mvprintw(B.second,x, "─");
+            }
+            for(int y = B.second; y>C.second;y--){
+                 mvprintw(y, B.first, "│");
+            }
+            for(int x = B.first; x<C.first;x++){
+                 mvprintw(C.second,x, "─");
+            }
+            mvprintw(B.second, A.first, "└");
+            mvprintw(C.second, B.first, "┌");
+            mvprintw(A.second, A.first, "O");
+            mvprintw(B.second, B.first, "O");
+            mvprintw(C.second, C.first, "X");
+            drawBox(0,0,FOVX, FOVY, "bold");
+            mvprintw(curY, curX, "D");
+            if(curX == C.first&&curY==C.second){
+                taskloop = false;
+            }
+        }
+        printCenter("Task completed!", FOVX, FOVY/2);
+        wait(20);
+        clear();
+        return true;
+    }else if(triggers[taskName][2]=="sample"){
+        clear();
+        bool taskloop = 1;
+        int ch;
+        int r = -1;
+        if(sample_countdown<0){
+            
+            for(int i=0;i<5; i++){
+                drawTesttube(8+(FOVX/6)*i,FOVY/2-1);
+                mvprintw(FOVY/2+6, 9+(FOVX/6)*i,  "%d[ ] ", i+1);
+            }
+            for(int i=0;i<5; i++){
+                attron(COLOR_PAIR(20));
+                drawSquare(10+(FOVX/6)*(i-1), 1, 3, 7, " ");
+                drawPipet(10+(FOVX/6)*i,1);
+                drawBox(0,1,FOVX,FOVY-2, "double");
+                attron(COLOR_PAIR(6));
+                
+                drawSquare(9+(FOVX/6)*i,FOVY/2, 5, 5, "@");
+                wait(5);
+            }
+            
+            attron(COLOR_PAIR(20));
+            drawSquare(10+(FOVX/6)*(4), 1, 3, 7, " ");
+            drawBox(0,1,FOVX,FOVY-2, "double");
+            sample_countdown = 600;
+            
+            
+        }
+        int choice = -1;
+        while(taskloop){
+            
+            ch = getch();
+            if(ch==kBinds.quit){
+                clear();
+                return false;
+            }else if(ch=='1'){
+                choice = 0;
+            }else if(ch=='2'){
+                choice = 1;
+            }else if(ch=='3'){
+                choice = 2;
+            }else if(ch=='4'){
+                choice = 3;
+            }else if(ch=='5'){
+                choice = 4;
+            }
+            if(sample_countdown>0){
+                sample_countdown--;
+                choice = -1;
+            }
+            drawBox(0,1,FOVX,FOVY-2, "double");
+            printCenter("Waiting for samples: "+std::to_string(sample_countdown/10)+"  ", FOVX, 1 );
+            printCenter("(You don't have to wait here)", FOVX, FOVY/3, 0, 1);
+            if(sample_countdown == 0){
+                 printCenter("       Choose the anomaly       ", FOVX, FOVY/3, 0, 1);
+                if(r <0)r=rand()%5;
+                if(choice == r){
+                    taskloop = false;
+                }
+            }
+            for(int i=0;i<5; i++){
+               
+                drawTesttube(8+(FOVX/6)*i,FOVY/2-1);
+                mvprintw(FOVY/2+6, 9+(FOVX/6)*i,  "%d[ ] ", i+1);
+                if(sample_countdown==0){
+                    attron(COLOR_PAIR(4));
+                    if(i==choice)attron(COLOR_PAIR(1));
+                    mvprintw(FOVY/2+6, 11+(FOVX/6)*i,  "*");
+                }
+                attron(COLOR_PAIR(6));
+                if(i==r)attron(COLOR_PAIR(1));
+                drawSquare(9+(FOVX/6)*i,FOVY/2, 5, 5, "@");
+                attron(COLOR_PAIR(20));
+                
+            }
+            
+        }
+        printCenter("Task completed!", FOVX, FOVY/2);
+        wait(20);
+        clear();
+        return true;
+        
+    }else if(triggers[taskName][2]=="align"){
+        clear();
+        int y = FOVY/2;
+        while(y==FOVY/2){
+            y = 1+rand()%(FOVY-2);
+        }
+        std::map<int, int> indents = {
+            {0, 2},
+            {1, 2},
+            {2, 1},
+            {3, 1},
+            {4, 1},
+            {5, 0},
+            {6, 0},
+            {7, 0},
+            {8, 0},
+            {9, 0},
+            {10, 1},
+            {11, 1},
+            {12, 1},
+            {13, 2},
+            {14, 2},
+            
+        };
+        bool taskloop = true; 
+        int ch;
+        while(taskloop){
+            ch = getch();
+            if(ch==kBinds.moveN){
+                if(y>1)y--;
+            }else if(ch==kBinds.moveS){
+                if(y<FOVY-1)y++;
+            }else if(ch==kBinds.quit){
+                clear();
+                return false;
+            }
+            
+            for(int i = 1;i<FOVY; i++){
+                mvprintw(i, FOVX*0.75+4+indents[i-1], "  #  ");
+                
+            }
+            mvprintw(y, FOVX*0.75+4+indents[y-1], "<=<=<");
+            for(int x = 1; x<FOVX*0.75-1;x++){
+                attron(COLOR_PAIR(1));
+                mvprintw(y, x, "-");
+                mvprintw(y-1, x, " ");
+                mvprintw(y+1, x, " ");
+                attron(COLOR_PAIR(20));
+                if(y==FOVY/2){
+                    attron(COLOR_PAIR(4));
+                    taskloop = false;
+                }
+                mvprintw(FOVY/2, x, "-");
+            }
+            mvprintw(y, FOVX*0.75-2, "D");
+            drawBox(0,0,FOVX*0.75, FOVY, "bold");
+             
+        }
+        attron(COLOR_PAIR(20));
+        printCenter("Task completed!", FOVX, FOVY/2);
+        wait(20);
+        clear();
+        return true;
     }else if(triggers[taskName][2]=="accept"){
         clear();
         int taskload = 1;
@@ -478,11 +1672,9 @@ bool handleTask(taskStruct tasks, std::map<char,std::vector<std::string>> &trigg
             
             
         }
-        while(cdown){
-            getch();
-            printCenter("     Task completed!     ", FOVX, FOVY/2);
-            cdown--;
-        }
+        attron(COLOR_PAIR(20));
+        printCenter("          Task completed!           ", FOVX, FOVY/2);
+        wait(20);
         clear();
         return true;
         
@@ -538,11 +1730,9 @@ bool handleTask(taskStruct tasks, std::map<char,std::vector<std::string>> &trigg
                 
             taskload--;
         }
-        while(cdown){
-            getch();
-            printCenter("     Task completed!     ", FOVX, FOVY/2);
-            cdown--;
-        }
+        attron(COLOR_PAIR(20));
+        printCenter("Task completed!", FOVX, FOVY/2);
+        wait(20);
         clear();
         return true;
         
@@ -627,11 +1817,9 @@ bool handleTask(taskStruct tasks, std::map<char,std::vector<std::string>> &trigg
             
             
         }
-        while(cdown){
-            getch();
-            printCenter("     Task completed!     ", FOVX, FOVY/2);
-            cdown--;
-        }
+        attron(COLOR_PAIR(20));
+        printCenter("          Task completed!          ", FOVX, FOVY/2);
+        wait(20);
         clear();
         return true;
     }
@@ -647,6 +1835,7 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
     bool game_started = false, murdered=false, voting=false;
     int role_countdown = 0, killing_cutscene_countdown=0, murderer=-1, murder_cutscene_countdown=0, ejection_cutscene_countdown=0, winner_countdown=0;
     int loading=1;
+    int sample_countdown = -1;
     std::map<int, int> previous_status, votes;
     int winner = 0, tasksPercent=0;
     //drawMap(gamemap, positions[id].x, positions[id].y);
@@ -674,7 +1863,7 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
 
         refresh();
         got_ch = getch();
-
+        if(sample_countdown>0)sample_countdown--;
         bzero(buff, sizeof(buff));
         if(role_countdown) {
             strcpy(buff, "u\n");
@@ -788,6 +1977,7 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
             }
         } else if (mode == 'q'){
             decoder >> a;
+            game_started = true;
             tasks.current = (char)a;
             int cnt = 0;
             
@@ -819,6 +2009,11 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
                 voting = false;
                 clear();
             }
+            if(tasks.list.size()){
+                tasks.list.clear();
+                tasksPercent = 0;
+            }
+            sample_countdown = -1;
             decoder >> c >> a >> b;
             if(c>0&&!winner) {
                 winner = c;
@@ -844,12 +2039,14 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
             
         }
         if (loading){
-            printCenter("Loading",FOVX, FOVY);
+            printCenter("       Loading       ",FOVX, FOVY);
             loading--;
         }else if(role_countdown) {
             displayRole(positions[id].status);
             winner = 0;
             role_countdown--;
+            if(role_countdown==0)
+                clear();
         } else if(winner_countdown) {
             winner_countdown--;
             if(winner==1)printCenter("Impostors win.", FOVX, FOVY);
@@ -925,7 +2122,22 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
         }else if(tasks.current){
             bool success = false;
             switch(tasks.current){
-                
+                case 'a':
+                case 'b':
+                case 'c':
+                case 'd':
+                case 'e':
+                case 'f':
+                case 'g':
+                case 'h':
+                case 'i':
+                case 'j':
+                case 'k':
+                case 'l':
+                case 'm':
+                case 'n': //vent
+                    success = handleVent(tasks, triggers, kBinds, positions, gamemap,wallmap, model,  sockfd, id);
+                    break;
                 case 't'://accept diverted power
                 case 'z':
                 case 'C':
@@ -934,7 +2146,7 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
                 case 'R':
                 case 'T':
                 case 'Z':
-                    if(!tasks.list['x'])success = handleTask(tasks, triggers, kBinds, positions, gamemap,wallmap, model,  sockfd, id);
+                    if(!tasks.list['x'])success = handleTask(tasks, triggers, kBinds, positions, gamemap,wallmap, model,  sockfd, id, sample_countdown);
                     break;
                 case 'B':
                 case 'E':
@@ -946,14 +2158,14 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
                     break;
                 case 'M':
                 case 'r'://empty 
-                    success = handleTask(tasks, triggers, kBinds, positions, gamemap, wallmap, model, sockfd, id);
+                    success = handleTask(tasks, triggers, kBinds, positions, gamemap, wallmap, model, sockfd, id, sample_countdown);
                     break;
                 case 'W':
                     if(!(tasks.list['M'])&&!(tasks.list['r']))
-                        success = handleTask(tasks, triggers, kBinds, positions, gamemap, wallmap, model, sockfd, id);
+                        success = handleTask(tasks, triggers, kBinds, positions, gamemap, wallmap, model, sockfd, id, sample_countdown);
                     break;
                 default:
-                    success = handleTask(tasks, triggers, kBinds, positions, gamemap, wallmap, model,  sockfd, id);
+                    success = handleTask(tasks, triggers, kBinds, positions, gamemap, wallmap, model,  sockfd, id, sample_countdown);
                     break;
             }
             
@@ -961,6 +2173,7 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
                 tasks.list[tasks.current] = 0;
                 strcpy(buff, "d\n");
             }else{
+                
                 strcpy(buff, "f\n");
             }
             write(sockfd, buff, sizeof(buff));
@@ -1022,23 +2235,23 @@ void drawCharacters(const int x, const int y, std::map<int, crewmate>  &position
 
 void printTasks(taskStruct &tasks, std::map<char,std::vector<std::string>> &triggers, bool impostor){
     if(impostor){
-        mvprintw(0, FOVX+1, "|  Fake tasks:");
+        mvprintw(0, FOVX, "|  Fake tasks:");
         int line = 1;
         std::string desc;
         for(auto t : tasks.list){
             desc  = "| "+triggers[t.first][2]+" in "+triggers[t.first][1];
             
-            mvprintw(line, FOVX+1, desc.c_str());
+            mvprintw(line, FOVX, desc.c_str());
             line++;
         }
     }else{
-        mvprintw(0, FOVX+1, "|  Your tasks:");
+        mvprintw(0, FOVX, "|  Your tasks:");
         int line = 1;
         std::string desc;
         for(auto t : tasks.list){
             desc  = triggers[t.first][2]+" in "+triggers[t.first][1];
             attron(COLOR_PAIR(20));
-            mvprintw(line, FOVX+1, "| ");
+            mvprintw(line, FOVX, "| ");
             if(t.second)attron(COLOR_PAIR(1));
             
             else attron(COLOR_PAIR(4));
@@ -1059,8 +2272,10 @@ void giveOutTasks(taskStruct &l){
     std::string divertTasks = "txzCKNRTZ";
     l.received = false;
     l.done = 0;
+    l.to_do = 0;
     l.current = 0;
     l.list.clear();
+    l.list['O']= 1;//debug purposes, remove later!
     while(l.list.size()<3){
         l.list[shortTasks.at(rand()%shortTasks.size())] = 1;
     }

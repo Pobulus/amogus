@@ -33,7 +33,7 @@ E task engine_down fuel
 F task medbay scan
 G task medbay sample
 H task navigation chart
-I task navigation stablilize
+I task navigation stabilize
 J task navigation upload
 K task navigation accept
 L task navigation fix
