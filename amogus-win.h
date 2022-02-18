@@ -5,7 +5,9 @@
 #include <fstream>
 #include <string>
 #include <cmath>
-
+#include <stdio.h>
+#include <fcntl.h>
+#include <io.h>
 #include <string.h>
 #include <iostream>
 #include <sstream>
@@ -17,30 +19,88 @@
 #define PORT 8888
 
 #include <stdlib.h>
-#define MAX 80
+#define bzero(b, len) (memset((b), '\0', (len)), (void) 0)
+#define MAX 256
 #define SA struct sockaddr
 #define TOPOFFSET 1
 #define FOVX 64
 #define FOVY 16
-#define RADIUS 30
+#define SIGHT_RADIUS 30
 #define ALIVE 1
 #define DEAD 0
 #define KILL_TIMEOUT 100
 #define KILL_RADIUS 7
+#define STARTING_POSITION_X 137
+#define STARTING_POSITION_Y 7
+#define INITIAL_KTIMEOUT 1200
+#define BUTTON_TIMEOUT 3000
 
-#define bzero(b, len) (memset((b), '\0', (len)), (void) 0)
+/**
+ * Holds position and status of a player
+ */
 struct crewmate {
     int x;
     int y;
     int status;
 };
+/**
+ * Holds text which represents the player in certain conditions
+ */
 struct playermodel {
     std::string alive;
     std::string body;
     std::string ghost;
-    
+};
+/**
+ * Holds key codes for specific actions
+ */
+struct keyBinds{
+    int moveN;
+    int moveE;
+    int moveW;
+    int moveS;
+    int moveNE;
+    int moveNW;
+    int moveSE;
+    int moveSW;
+    int middle;
+    int kill;
+    int use;
+    int report;
+    int ready;
+    int quit;
+};
+
+/**
+ * Holds countdowns
+ */
+struct countdown{
+    std::map<int, unsigned int> kill;
+    unsigned int voting;
+    unsigned int button;
     
 };
+struct taskStruct{
+    char current;
+    std::map<char, int> list;
+    int done;
+    bool received;
+};
+/**
+ * Holds necessary game status like postitions and flags
+ */
+struct status{
+    std::map<int, crewmate> position;
+    std::map<int, taskStruct> tasks;
+    std::map<int, crewmate> ghosts;
+    std::map<int, int> votes;
+    std::map<int, bool> ready;
+    bool in_progress;
+    unsigned int cameras;
+    countdown timer;
+    int winner;
+};
+
 const std::string impostor = 
 "YOU ARE THE \n"
 "         ___ __  __ ___  ___  ___ _____ ___  ___ \n"
@@ -64,13 +124,14 @@ const std::string banner =
 "######## |## | ## | ## |## |  ## |## |  ## |## |  ## |##      \\ \n"
 "## |  ## |## | ## | ## |## \\__## |## \\__## |## \\__## | ######  |\n"
 "## |  ## |## | ## | ## |##    ##/ ##    ## |##    ##/ /     ##/ \n";
-
-const std::string banner2 = "##/   ##/ ##/  ##/  ##/  ######/   ####### | ######/  #######/  \n"
+const std::string banner2 = 
+"##/   ##/ ##/  ##/  ##/  ######/   ####### | ######/  #######/  \n"
 "                                  /  \\__## |\n"                    
 "                                  ##    ##/\n"                     
 "                                   ######/\n"
-"A         Mediocre      Online    Game of   Unending  Suspicion\n";
-
+"A         Mediocre      Online    Game of   Unending  Suspicion\n"
+"\n"
+"               Press any key to start...\n";
 /**
  * Checks if position b is within the line of sight of position a;
  *@param xa x cooridnate of source postion
@@ -88,14 +149,70 @@ bool LOS(int xa, int ya, int xb, int yb, std::vector<std::string> &wallmap);
  */
 void displayRole(int status);
 /**
- * Reads paramtere's passed to the main function
- *
+ * Reads parameters passed to the main function
+ * @param argc number size of argv
+ * @param argv array of arguments
+ * @param[out] ip server address
+ * @param[out] a ascii mode flag
+ * @param[out] kb custom keyBinds flag
+ * @return true if any errors
  */
-bool readParameters ( int& argc, char** argv, std::string& ip, bool &a );
+bool readParameters ( int& argc, char** argv, std::string& ip, bool &a, bool &kb );
+
+/**
+ * Reads map data from file
+ * @param mapname name of the file to open
+ * @return vector of strings wchich contains the map
+ */
 std::vector<std::string> loadMap ( std::string mapname ) ;
-void drawMap(std::vector<std::string> &gmap, int x, int y);
+
+/**
+ * Draws the map from specified perspecitve
+ * @param gmap game map data
+ * @param x horizontal position
+ * @param y vertical position
+ */
+void drawMap(std::vector<std::string> &gmap, int x, int y, bool camera=false);
+
+/**
+ * prints a file, replacing characters with specified colors. 
+ * @param colA color to replace 'a' and 'A'
+ * @param colB color to replace 'b' and 'B'
+ * @param filename name of the text file to display
+ */
 void cutscene(int colA, int colB, std::string filename);
+
+/**
+ * Calculates the disctance between point 1 and 2
+ * @param x1 horizontal position 1
+ * @param y1 vertical position 1
+ * @param x2 horizontal position 2
+ * @param y2 vertical position 2
+ * @return distance
+ */
 int distance(int x1, int y1, int x2, int y2);
-void printCenter(std::string text, int limX, int limY, int offX=0, int offY=0);
-void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewmate &ghost, std::vector<std::string> &gamemap, std::vector<std::string> &wallmap, playermodel model, std::map<char,std::vector<std::string>> &triggers);
+
+/**
+ * Displays text in the center of a box
+ * @param text the text to display
+ * @param limX box width
+ * @param limY box height
+ * @param offX box offset in x cooridnate (default: 0)
+ * @param offY box offset in y cooridnate (default: 0)
+ */
+void printCenter(std::string text, const int limX, const int limY, const int offX=0, const int offY=0);
+
+/**
+ * Handles player input and communication with the server
+ */
+void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewmate &ghost, std::vector<std::string> &gamemap, std::vector<std::string> &wallmap, playermodel model, std::map<char,std::vector<std::string>> &triggers, bool kb, taskStruct &tasks);
+void drawCharacters(const int x, const int y, std::map<int, crewmate>  &positions, std::vector<std::string> &wallmap, playermodel model);
+void printTasks(taskStruct &tasks, std::map<char,std::vector<std::string>> &triggers, bool impostor);
 std::map<char,std::vector<std::string>> loadLabels(std::string filename);
+void sendReply(int sd,int i,  status &game);
+void applyMovement(const char ch,  const int i, std::map<int, crewmate>&p, std::vector<std::string> &gamemap, const bool ghost);
+void votesResult(status &game);
+void cleanDeadBodies(std::map<int, crewmate> &position);
+void startGame(status &game);
+bool collisionCheck(int id, std::map<int, crewmate> &pos, std::vector<std::string> &gamemap, bool ghost);
+bool handleTask(char taskName, std::map<char,std::vector<std::string>> &triggers, const keyBinds kBinds, std::map<int, crewmate>  &positions, std::vector<std::string> &gamemap,std::vector<std::string> &wallmap, playermodel model, int sockfd, int id);
