@@ -1863,7 +1863,7 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
 
         refresh();
         got_ch = getch();
-        if(sample_countdown>0)sample_countdown--;
+        int sample_countdown = -1;
         bzero(buff, sizeof(buff));
         if(role_countdown) {
             strcpy(buff, "u\n");
@@ -2173,7 +2173,6 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
                 tasks.list[tasks.current] = 0;
                 strcpy(buff, "d\n");
             }else{
-                
                 strcpy(buff, "f\n");
             }
             write(sockfd, buff, sizeof(buff));
@@ -2275,7 +2274,6 @@ void giveOutTasks(taskStruct &l){
     l.to_do = 0;
     l.current = 0;
     l.list.clear();
-    l.list['O']= 1;//debug purposes, remove later!
     while(l.list.size()<3){
         l.list[shortTasks.at(rand()%shortTasks.size())] = 1;
     }

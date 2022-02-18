@@ -38,9 +38,6 @@ int main(int argc, char **argv) {
     triggers = loadLabels("cha_list.txt");
     triggers[' '] = {"", ""};
     std::map<int,  crewmate> positions;
-    
- 
-    
     int sockfd, connfd;
     struct sockaddr_in servaddr, cli;
    
@@ -102,7 +99,6 @@ int main(int argc, char **argv) {
     init_pair(12, COLOR_BLACK, COLOR_YELLOW);
     init_pair(13, COLOR_BLACK, COLOR_BLUE);
     init_pair(14, COLOR_BLACK, COLOR_WHITE );
-    
     init_pair(51, COLOR_RED, COLOR_CYAN);
     init_pair(52, COLOR_CYAN, COLOR_BLUE);
     init_pair(53, COLOR_MAGENTA, COLOR_CYAN);
