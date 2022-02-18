@@ -95,7 +95,6 @@ int main(int argc, char **argv) {
     init_pair(24, COLOR_GREEN, COLOR_WHITE);
     init_pair(25, COLOR_YELLOW, COLOR_WHITE);
     init_pair(26, COLOR_BLUE, COLOR_WHITE);
-    
     init_pair(8, COLOR_BLACK, COLOR_RED);
     init_pair(9, COLOR_BLACK, COLOR_CYAN );
     init_pair(10, COLOR_BLACK, COLOR_MAGENTA);
@@ -103,17 +102,30 @@ int main(int argc, char **argv) {
     init_pair(12, COLOR_BLACK, COLOR_YELLOW);
     init_pair(13, COLOR_BLACK, COLOR_BLUE);
     init_pair(14, COLOR_BLACK, COLOR_WHITE );
+    
+    init_pair(51, COLOR_RED, COLOR_CYAN);
+    init_pair(52, COLOR_CYAN, COLOR_BLUE);
+    init_pair(53, COLOR_MAGENTA, COLOR_CYAN);
+    init_pair(54, COLOR_GREEN, COLOR_CYAN);
+    init_pair(55, COLOR_YELLOW, COLOR_CYAN);
+    init_pair(56, COLOR_BLUE, COLOR_CYAN);
+    init_pair(57, COLOR_WHITE, COLOR_CYAN);
+    init_pair(71, COLOR_RED, COLOR_CYAN);
+    init_pair(72, COLOR_CYAN, COLOR_CYAN);
+    init_pair(73, COLOR_MAGENTA, COLOR_CYAN);
+    init_pair(74, COLOR_GREEN, COLOR_CYAN);
+    init_pair(75, COLOR_YELLOW, COLOR_CYAN);
+    init_pair(76, COLOR_BLUE, COLOR_CYAN);
+    init_pair(58, COLOR_BLACK, COLOR_CYAN);
+    init_pair(59, COLOR_BLACK, COLOR_CYAN );
+    init_pair(60, COLOR_BLACK, COLOR_CYAN);
+    init_pair(61, COLOR_BLACK, COLOR_CYAN);
+    init_pair(62, COLOR_BLACK, COLOR_CYAN);
+    init_pair(63, COLOR_BLACK, COLOR_CYAN);
+    init_pair(64, COLOR_BLACK, COLOR_CYAN );
 
     mvprintw(0,0, banner.c_str());
-    getch();
-    
-    timeout(100);
-    clear();
-    
-    printCenter("Server is full.", FOVX, FOVY);
-    refresh();
-    // function for connections
-     char buff[MAX];
+         char buff[MAX];
 
 
         bzero(buff, sizeof(buff));
@@ -124,6 +136,15 @@ int main(int argc, char **argv) {
         deco << buff;
         deco >> playertag;
         }
+    getch();
+    
+    timeout(100);
+    clear();
+    
+    printCenter("Server is full.", FOVX, FOVY);
+    refresh();
+    // function for connections
+    srand(time(NULL));
        
     crewmate ghst; //pozycja gracza kiedy jest duchem
     playermodel cm;

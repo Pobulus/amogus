@@ -82,6 +82,7 @@ struct taskStruct{
     char current;
     std::map<char, int> list;
     int done;
+    int to_do;
     bool received;
 };
 /**
@@ -213,3 +214,5 @@ void cleanDeadBodies(std::map<int, crewmate> &position);
 void startGame(status &game);
 bool collisionCheck(int id, std::map<int, crewmate> &pos, std::vector<std::string> &gamemap, bool ghost);
 bool handleTask(char taskName, std::map<char,std::vector<std::string>> &triggers, const keyBinds kBinds, std::map<int, crewmate>  &positions, std::vector<std::string> &gamemap,std::vector<std::string> &wallmap, playermodel model, int sockfd, int id);
+void drawCircle(const int x, const int y, const int r, std::string characters);
+void wait(int n);

@@ -94,6 +94,38 @@ int main(int argc, char *argv[])
     addrlen = sizeof(address);
     puts("Waiting for connections ...");
     game.cameras = 0;
+    std::map<char, std::pair<int, int>> vent_positions= {
+        {'a', {58, 12}},
+        {'b', {10, 31}},
+        {'c', {20, 44}},
+        {'d', {58, 64}},
+        {'e', {74, 45}},
+        {'f', {88, 34}},
+        {'g', {96, 47}},
+        {'h', {210, 40}},
+        {'i', {178, 24}},
+        {'j', {178, 53}},
+        {'k', {209, 8}},
+        {'l', {250, 31}},
+        {'m', {250, 43}},
+        {'n', {212, 73}}
+    };
+    std::map<char, char> vent_connections = {
+        {'a', 'b'},
+        {'b', 'a'},
+        {'c', 'd'},
+        {'d', 'c'},
+        {'e', 'f'},
+        {'f', 'g'},
+        {'g', 'e'},
+        {'h', 'j'},
+        {'i', 'h'},
+        {'j', 'i'},
+        {'k', 'l'},
+        {'l', 'k'},
+        {'m', 'n'},
+        {'n', 'm'}
+    };
     while(TRUE)
     {
         //clear the socket set
@@ -145,8 +177,7 @@ int main(int argc, char *argv[])
             //send new connection greeting message
 
 
-            puts("Welcome message sent successfully");
-
+        
             //add new socket to array of sockets
             for (i = 0; i < max_clients; i++)
             {
@@ -196,7 +227,7 @@ int main(int argc, char *argv[])
                     //Close the socket and mark as 0 in list for reuse
                     close( sd );
                     game.tasks[i].received = false;
-                    game.tasks[i].current= 0;
+                    if(game.tasks[i].current>'n'||game.tasks[i].current<'a')game.tasks[i].current= 0;
                     client_socket[i] = 0;
                 }
 
@@ -281,26 +312,38 @@ int main(int argc, char *argv[])
                             } else if(triggers[trigger][0]=="task") {
                                 if(game.position[i].status >>1%2==0&&game.tasks[i].list[trigger]){
                                     game.tasks[i].current=trigger;
-                                     
-                                    std::cout << "This task is on the list"<<std::endl;
-                                    
-                                
-                                    
+                                    std::cout << "This task is on the list"<<std::endl;   
                                 }
                                 
+                            } else if(triggers[trigger][0]=="vent") {
+                                if(game.position[i].status >>1%2){
+                                   game.tasks[i].current=trigger; 
+                                   game.position[i].x = 0;
+                                   game.position[i].y = 0;
+                                }
                             }
-                            
-                           
                         }
                         sendReply(sd, i, game);
-
+                        
                     } else if(buffer[0] == 'd'&& game.in_progress) {//player has done a task
-                        game.tasks[i].done++;
-                        game.tasks[i].list[game.tasks[i].current] = 0;
-                        game.tasks[i].current = 0;
+                        if(game.tasks[i].current>='a'&&game.tasks[i].current<'o'){//player moves to next vent
+                           game.tasks[i].current = vent_connections[game.tasks[i].current];
+                           std::cout << i <<": vent next"<<std::endl;
+                        }
+                        else{
+                            game.tasks[i].done++;
+                            game.tasks[i].list[game.tasks[i].current] = 0;
+                            game.tasks[i].current = 0;
+                        }
                         //sendReply(sd, i, game);
                     } else if(buffer[0] == 'f'&& game.in_progress) {//player has failed a task
                         if(game.tasks[i].current=='6')game.cameras--;
+                        else if(game.tasks[i].current>='a'&&game.tasks[i].current<'o'){//player leaves a vent
+                            game.position[i].x = vent_positions[game.tasks[i].current].first;
+                            game.position[i].y = vent_positions[game.tasks[i].current].second;
+                            std::cout << i <<": vent exit"<<std::endl;
+                            
+                        }
                         game.tasks[i].current = 0;
                         //sendReply(sd, i, game);
                     } else if(buffer[0] == 'v') { //player votes
@@ -345,6 +388,6 @@ int main(int argc, char *argv[])
             }
         }
     }
-
+    
     return 0;
 }
