@@ -2,6 +2,7 @@
 #include <ncurses.h>
 #include <vector>
 #include <map>
+#include <set>
 #include <fstream>
 #include <string>
 #include <cmath>
@@ -32,6 +33,9 @@
 #define STARTING_POSITION_Y 7
 #define INITIAL_KTIMEOUT 1200
 #define BUTTON_TIMEOUT 3000
+#define DOOR_TIMEOUT 100
+#define SABBOTAGE_TIMEOUT 1500
+#define PI 3.14159
 
 /**
  * Holds position and status of a player
@@ -65,7 +69,7 @@ struct keyBinds{
     int kill;
     int use;
     int report;
-    int ready;
+    int sabbotage;
     int quit;
 };
 
@@ -76,6 +80,7 @@ struct countdown{
     std::map<int, unsigned int> kill;
     unsigned int voting;
     unsigned int button;
+    unsigned int sabbotage;
     
 };
 struct taskStruct{
@@ -98,6 +103,9 @@ struct status{
     unsigned int cameras;
     countdown timer;
     int winner;
+    int sabbo;
+    bool light_switches[5];
+    std::pair<int, int> hand_scanners;
 };
 
 const std::string impostor = 
@@ -139,7 +147,7 @@ const std::string banner =
  *@param wallmap map of walls which block sight
  *@return true if b is visible, false if view of b is blocked
 */
-bool LOS(int xa, int ya, int xb, int yb, std::vector<std::string> &wallmap);
+bool LOS(int xa, int ya, int xb, int yb, std::vector<std::string> &wallmap, int sabbo);
 
 /**
  *Shows a message about player's role in the game.
@@ -170,7 +178,7 @@ std::vector<std::string> loadMap ( std::string mapname ) ;
  * @param x horizontal position
  * @param y vertical position
  */
-void drawMap(std::vector<std::string> &gmap, int x, int y, bool camera=false);
+void drawMap(std::vector<std::string> &gmap, std::vector<std::string> &wallmap, int x, int y, int sabbo, bool camera=false);
 
 /**
  * prints a file, replacing characters with specified colors. 
@@ -204,11 +212,11 @@ void printCenter(std::string text, const int limX, const int limY, const int off
  * Handles player input and communication with the server
  */
 void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewmate &ghost, std::vector<std::string> &gamemap, std::vector<std::string> &wallmap, playermodel model, std::map<char,std::vector<std::string>> &triggers, bool kb, taskStruct &tasks);
-void drawCharacters(const int x, const int y, std::map<int, crewmate>  &positions, std::vector<std::string> &wallmap, playermodel model);
-void printTasks(taskStruct &tasks, std::map<char,std::vector<std::string>> &triggers, bool impostor);
+void drawCharacters(const int x, const int y, std::map<int, crewmate>  &positions, std::vector<std::string> &wallmap, playermodel model, int sabbo);
+void printTasks(taskStruct &tasks, std::map<char,std::vector<std::string>> &triggers, int status, int sample_countdown, int sabbo);
 std::map<char,std::vector<std::string>> loadLabels(std::string filename);
 void sendReply(int sd,int i,  status &game);
-void applyMovement(const char ch,  const int i, std::map<int, crewmate>&p, std::vector<std::string> &gamemap, const bool ghost);
+void applyMovement(const char ch,  const int i, std::map<int, crewmate>&p, std::vector<std::string> &gamemap, int sabbo, const bool ghost);
 void votesResult(status &game);
 void cleanDeadBodies(std::map<int, crewmate> &position);
 void startGame(status &game);

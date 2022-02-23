@@ -237,6 +237,31 @@ int main(int argc, char *argv[])
                     if(buffer[0] == 'u') {//player asks for an update
                         //std::cout << "u" << i <<std::endl;
                         if(game.timer.button)game.timer.button--;
+                        if(game.timer.sabbotage){
+                            if(game.sabbo<8){
+                                game.timer.sabbotage--;
+                                if(game.timer.sabbotage==0)game.sabbo = 0;
+                            }else if(game.sabbo>9){
+                                game.timer.sabbotage--;
+                                if(game.timer.sabbotage==0){
+                                    game.sabbo = 0;
+                                    std::cout << "impostors win"<<std::endl;
+                                    game.winner = 1;
+                                    std::cout <<"Reseting game"<<std::endl;
+                                    
+                                    for(auto cm : game.position) {
+                                        game.position[cm.first] = {STARTING_POSITION_X+2*cm.first, STARTING_POSITION_Y, 1};
+                                        game.timer.kill[cm.first] = INITIAL_KTIMEOUT;
+                                        game.ready[cm.first] = false;
+                                        game.in_progress = false;
+                                        game.tasks[cm.first].list.clear();
+                                        game.tasks[cm.first].current = 0;
+                                    }
+                                    
+                                }
+                            }
+                            
+                        }
                         if(game.timer.kill[i])game.timer.kill[i]--;
                         if(game.timer.voting) {
                             game.timer.voting--;
@@ -286,6 +311,82 @@ int main(int argc, char *argv[])
                         }
                         sendReply(sd, i, game);
 
+                    } else if(buffer[0] == 's'&& game.in_progress) {//player wants to sabbotage
+                        if(!game.sabbo&&!game.timer.sabbotage)
+                        switch(buffer[1]){
+                            case '1':
+                                game.sabbo = 1;
+                                game.timer.sabbotage = DOOR_TIMEOUT*game.position.size();
+                                break;
+                            case '2':
+                                game.sabbo = 2;
+                                game.timer.sabbotage = DOOR_TIMEOUT*game.position.size();
+                                break;
+                            case '3':
+                                game.sabbo = 3;
+                                game.timer.sabbotage = DOOR_TIMEOUT*game.position.size();
+                                break;
+                            case '4':
+                                game.sabbo = 4;
+                                game.timer.sabbotage = DOOR_TIMEOUT*game.position.size();
+                                break;
+                            case '5':
+                                game.sabbo = 5;
+                                game.timer.sabbotage = DOOR_TIMEOUT*game.position.size();
+                                break;
+                            case '6':
+                                game.sabbo = 6;
+                                game.timer.sabbotage = DOOR_TIMEOUT*game.position.size();
+                                break;
+                            case '7':
+                                game.sabbo = 7;
+                                game.timer.sabbotage = DOOR_TIMEOUT*game.position.size();
+                                break;
+                            case '8':
+                                game.sabbo = 8;
+                                for(auto  &player : game.tasks){
+                                    player.second.list['5'] = 1;
+//                                     player.second.to_do++;
+                                    player.second.received = false;
+                                }
+                                game.timer.sabbotage = SABBOTAGE_TIMEOUT;
+                                break;
+                            case '9':
+                                game.sabbo = 9;
+                                for(int i = 0; i<5;i++){
+                                    game.light_switches[i] = rand()%2;
+                                }
+                                
+                                for(auto  &player : game.tasks){
+                                    player.second.list['2'] = 1;
+//                                     player.second.to_do++;
+                                    player.second.received = false;
+                                }
+                                game.timer.sabbotage = SABBOTAGE_TIMEOUT;
+                                break;
+                            case 'a'://reactor
+                                game.sabbo = 10;
+                                game.hand_scanners = {0,0};
+                                for(auto  &player : game.tasks){
+                                    player.second.list['0'] = 1;
+                                    player.second.list['1'] = 1;
+//                                     player.second.to_do++;
+                                    player.second.received = false;
+                                }
+                                game.timer.sabbotage = SABBOTAGE_TIMEOUT;
+                                break;
+                            case 'b'://oxygen
+                                game.sabbo = 11;
+                                for(auto  &player : game.tasks){
+                                    player.second.list['3'] = 1;
+                                    player.second.list['4'] = 1;
+//                                     player.second.to_do++;
+                                    player.second.received = false;
+                                }
+                                game.timer.sabbotage = SABBOTAGE_TIMEOUT;
+                                break;
+                        }
+                        sendReply(sd, i, game);
                     } else if(buffer[0] == 't'&& game.in_progress) {//player wants to do a task
                         char trigger;
                         std::cout << "t"<<i;
@@ -315,6 +416,38 @@ int main(int argc, char *argv[])
                                     std::cout << "This task is on the list"<<std::endl;   
                                 }
                                 
+                            } else if(triggers[trigger][0]=="sabbo") {
+                                if(game.position[i].status%2==1&&game.tasks[i].list[trigger]){
+                                    game.tasks[i].current=trigger;
+                                    std::cout << "This task is on the list"<<std::endl;  
+                                    if(trigger == '0'&&game.sabbo == 10){
+                                        game.hand_scanners.first++;
+                                        if(game.hand_scanners.second){
+                                            //HAND SCAN SUCcessfULL
+                                            game.tasks[i].current = 0;
+                                            for(auto &player : game.tasks){
+                                                player.second.list['0'] = 0;
+                                                player.second.list['1'] = 0;
+                                                player.second.received = false;
+                                            }
+                                            game.sabbo = 0;
+                                            
+                                        }
+                                    }else if(trigger == '1'&&game.sabbo == 10){
+                                        game.hand_scanners.second++;
+                                        if(game.hand_scanners.first){
+                                            //HAND SCAN SUCcessfULL
+                                            game.tasks[i].current = 0;
+                                            for(auto &player : game.tasks){
+                                                player.second.list['0'] = 0;
+                                                player.second.list['1'] = 0;
+                                                player.second.received = false;
+                                            }
+                                            game.sabbo = 0;
+                                        }
+                                    }
+                                }
+                                
                             } else if(triggers[trigger][0]=="vent") {
                                 if(game.position[i].status >>1%2){
                                    game.tasks[i].current=trigger; 
@@ -325,10 +458,80 @@ int main(int argc, char *argv[])
                         }
                         sendReply(sd, i, game);
                         
+                    } else if(buffer[0] == 'l'&& game.in_progress) {//player flips a switch
+                        switch(buffer[1]){
+                            case '1':
+                                game.light_switches[0] = !game.light_switches[0];
+                                break;
+                            case '2':
+                                game.light_switches[1] = !game.light_switches[1];
+                                break;
+                            case '3':
+                                game.light_switches[2] = !game.light_switches[2];
+                                break;
+                            case '4':
+                                game.light_switches[3] = !game.light_switches[3];
+                                break;
+                            case '5':
+                                game.light_switches[4] = !game.light_switches[4];
+                                break;
+                            
+                        }
+                        if(game.light_switches[0]&&game.light_switches[1]&&game.light_switches[2]&&game.light_switches[3]&&game.light_switches[4]){
+                            game.tasks[i].current = 0;
+                            for(auto &player : game.tasks){
+                                player.second.list['2'] = 0;
+                                player.second.received = false;
+                            }
+                            game.sabbo = 0;
+                        }
+                         
+                        
+                         sendReply(sd, i, game);
+                    }else if(buffer[0] == 'e'){//empty message
+                        
                     } else if(buffer[0] == 'd'&& game.in_progress) {//player has done a task
                         if(game.tasks[i].current>='a'&&game.tasks[i].current<'o'){//player moves to next vent
                            game.tasks[i].current = vent_connections[game.tasks[i].current];
                            std::cout << i <<": vent next"<<std::endl;
+                        }else if(game.tasks[i].current=='5'&&game.sabbo == 8){//player fixed communications
+                            game.tasks[i].current = 0;
+                            for(auto &player : game.tasks){
+                                player.second.list['5'] = 0;
+                                player.second.received = false;
+                            }
+                            game.sabbo = 0;
+                        
+                        }else if(game.tasks[i].current=='4'&&game.sabbo == 11){//player fixed oxygen in o2
+                            game.tasks[i].current = 0;
+                            for(auto &player : game.tasks){
+                                player.second.list['4'] = 0;
+                                player.second.received = false;
+                            }
+                            if(game.tasks[i].list['3']==0)
+                                game.sabbo = 0;
+                        
+                        }else if(game.tasks[i].current=='3'&&game.sabbo == 11){//player fixed oxygen in admin
+                            game.tasks[i].current = 0;
+                            for(auto &player : game.tasks){
+                                player.second.list['3'] = 0;
+                                player.second.received = false;
+                            }
+                            if(game.tasks[i].list['4']==0)
+                                game.sabbo = 0;
+                        
+                        
+                        }else if(game.tasks[i].current=='2'&&game.sabbo == 9){//player fixed lights
+                            game.tasks[i].current = 0;
+                            for(auto &player : game.tasks){
+                                player.second.list['2'] = 0;
+                                player.second.received = false;
+                            }
+                            game.sabbo = 0;
+                         }else if(game.tasks[i].current == '0'&&game.sabbo == 10){
+                            game.hand_scanners.first--;
+                        }else if(game.tasks[i].current == '1'&&game.sabbo == 10){
+                            game.hand_scanners.second--;
                         }
                         else{
                             game.tasks[i].done++;
@@ -343,6 +546,10 @@ int main(int argc, char *argv[])
                             game.position[i].y = vent_positions[game.tasks[i].current].second;
                             std::cout << i <<": vent exit"<<std::endl;
                             
+                        }else if(game.tasks[i].current == '0'){
+                            game.hand_scanners.first--;
+                        }else if(game.tasks[i].current == '1'){
+                            game.hand_scanners.second--;
                         }
                         game.tasks[i].current = 0;
                         //sendReply(sd, i, game);
@@ -359,12 +566,12 @@ int main(int argc, char *argv[])
                     } else if(buffer[0] == 'm') { //player moves
 
                         if(game.position[i].status%2) {
-                            applyMovement(buffer[1], i, game.position, gamemap, false);
+                            applyMovement(buffer[1], i, game.position, gamemap, game.sabbo, false);
 
                             sendReply(sd, i, game);
 
                         } else {
-                            applyMovement(buffer[1], i, game.ghosts, gamemap, true);
+                            applyMovement(buffer[1], i, game.ghosts, gamemap, game.sabbo, true);
                             sendReply(sd, i, game);
 
                         }

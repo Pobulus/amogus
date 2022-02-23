@@ -18,7 +18,7 @@ struct keyBinds {
     int kill;
     int use;
     int report;
-    int ready;
+    int sabbotage;
     int quit;
 };
 
@@ -80,9 +80,9 @@ int main() {
     c = getch();
     kb.report = c;
     printw("%d [%c]\n", c, (char)c);
-    printw("ready to play: ");
+    printw("open sabbotage menu: ");
     c = getch();
-    kb.ready= c;
+    kb.sabbotage= c;
     printw("%d [%c]\n", c, (char)c);
     printw("Quit: ");
     c = getch();
@@ -97,7 +97,7 @@ int main() {
             fileStream << kb.moveN << " " << kb.moveE << " " << kb.moveW << " " << kb.moveS;
             fileStream << " " << kb.moveNE << " " << kb.moveNW << " " << kb.moveSE << " " << kb.moveSW;
             fileStream << " " << kb.middle;
-            fileStream << " " << kb.kill << " " << kb.use << " " << kb.report << " " << kb.ready << " "<< kb.quit;
+            fileStream << " " << kb.kill << " " << kb.use << " " << kb.report << " " << kb.sabbotage << " "<< kb.quit;
 
             fileStream.close();
              std::cout << " " <<"File exported as keybinds.txt."<<std::endl;
