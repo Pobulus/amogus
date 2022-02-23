@@ -81,7 +81,7 @@ void drawExplosion(const int x, const int y){
     
 }
 
-void drawMap(std::vector<std::string> &gmap, int x, int y, bool camera) {
+void drawMap(std::vector<std::string> &gmap, std::vector<std::string> &wallmap, int x, int y, int sabbo, bool camera) {
 
     for(int i = 0; i < FOVX; i++) {
         for(int k = 0; k < FOVY; k++) {
@@ -89,17 +89,79 @@ void drawMap(std::vector<std::string> &gmap, int x, int y, bool camera) {
                 move(k+TOPOFFSET, i);
                 switch(gmap[k+y-(FOVY/2)].at(i+x-(FOVX/2))) {
                 case '%':
+                    if(sabbo == 9){
+                        addrawch(L'▓');
+                    }else{
                     attron(COLOR_PAIR(14));
                     printw(" ");
                     attron(COLOR_PAIR(20));
+                    }
                     break;
+                case '$':
+                    
+                    if(wallmap[k+y-(FOVY/2)].at(i+x-(FOVX/2))=='$')
+                    {
+                       if(sabbo == 1) 
+                            addrawch(L'▓');
+                       else
+                            printw(" ");
+                    }
+                    else if(wallmap[k+y-(FOVY/2)].at(i+x-(FOVX/2))=='&')
+                   {
+                       if(sabbo == 2) 
+                            addrawch(L'▓');
+                       else
+                            printw(" ");
+                    }
+                    
+                    else if(wallmap[k+y-(FOVY/2)].at(i+x-(FOVX/2))=='#')
+                   {
+                       if(sabbo == 3) 
+                            addrawch(L'▓');
+                       else
+                            printw(" ");
+                    }
+                    else if(wallmap[k+y-(FOVY/2)].at(i+x-(FOVX/2))=='\"')
+                    {
+                       if(sabbo == 4) 
+                            addrawch(L'▓');
+                       else
+                            printw(" ");
+                    }
+                    else if(wallmap[k+y-(FOVY/2)].at(i+x-(FOVX/2))=='>')
+                    {
+                       if(sabbo == 5) 
+                            addrawch(L'▓');
+                       else
+                            printw(" ");
+                    }
+                    else if(wallmap[k+y-(FOVY/2)].at(i+x-(FOVX/2))=='<')
+                    {
+                       if(sabbo == 6) 
+                            addrawch(L'▓');
+                       else
+                            printw(" ");
+                    }
+                    else if(wallmap[k+y-(FOVY/2)].at(i+x-(FOVX/2))=='^')
+                    {
+                       if(sabbo == 7) 
+                            addrawch(L'▓');
+                       else
+                            printw(" ");
+                    }
+                    break; 
+                    
                 case '~':
-                    if(camera) attron(COLOR_PAIR(21));
-                    else attron(COLOR_PAIR(14));
-                    attron(A_BOLD);
-                    printw("~");
-                    attroff(A_BOLD);
-                    attron(COLOR_PAIR(20));
+                    if(sabbo == 9){
+                        addrawch(L'▓');
+                    }else{
+                        if(camera) attron(COLOR_PAIR(21));
+                        else attron(COLOR_PAIR(14));
+                        attron(A_BOLD);
+                        printw("~");
+                        attroff(A_BOLD);
+                        attron(COLOR_PAIR(20));
+                    }
                 case 'Y':
                 case ':':
                     attron(COLOR_PAIR(4));//green
@@ -173,10 +235,9 @@ void displayRole(int status) {
     }
     attron(COLOR_PAIR(20));
 }
-
-bool LOS(int xa, int ya, int xb, int yb, std::vector<std::string> &wallmap) {
-    //cannot see further than SIGHT_RADIUS
-    if(distance(xa,  ya, xb, yb) > SIGHT_RADIUS)return false;
+bool lookForObstacles(int xa, int ya, int xb, int yb, std::vector<std::string> &wallmap, char obs){
+                                          
+                                                             
     int dx, dy;
     
     dx = xa-xb;//x distance
@@ -185,35 +246,71 @@ bool LOS(int xa, int ya, int xb, int yb, std::vector<std::string> &wallmap) {
     if(abs(dx)>abs(dy)) { //dx is bigger
         for(int i = 0; i < (abs(dx)-abs(dy))/2; i++) {
             xb+=sgn(dx);
-            if(wallmap[yb].at(xb) == '%')return false;
+            if(wallmap[yb].at(xb) == obs)return false;
         }
         while(yb != ya) {
             xb+=sgn(dx);
-            if(wallmap[yb].at(xb) == '%')return false;
+            if(wallmap[yb].at(xb) == obs)return false;
             yb+=sgn(dy);
-            if(wallmap[yb].at(xb) == '%')return false;
+            if(wallmap[yb].at(xb) == obs)return false;
         }
         while(xb != xa) {
             xb+=sgn(dx);
-            if(wallmap[yb].at(xb) == '%')return false;
+            if(wallmap[yb].at(xb) == obs)return false;
         }
     } else { //dy is bigger
         for(int i = 0; i < (abs(dy)-abs(dx))/2; i++) {
             yb+=sgn(dy);
-            if(wallmap[yb].at(xb) == '%')return false;
+            if(wallmap[yb].at(xb) == obs)return false;
         }
         while(xb != xa) {
             yb+=sgn(dy);
-                                                        
             xb+=sgn(dx);
-            if(wallmap[yb].at(xb) == '%')return false;
+            if(wallmap[yb].at(xb) == obs)return false;
         }
         while(yb != ya) {
             yb+=sgn(dy);
-            if(wallmap[yb].at(xb) == '%')return false;
+            if(wallmap[yb].at(xb) == obs)return false;
         }
     }
     return true;
+}
+bool LOS(int xa, int ya, int xb, int yb, std::vector<std::string> &wallmap, int sabbo) {
+    //cannot see further than SIGHT_RADIUS
+    if(sabbo != 9){
+        if(distance(xa,  ya, xb, yb) > SIGHT_RADIUS)return false;
+    }else{
+        if(distance(xa,  ya, xb, yb) > SIGHT_RADIUS/3)return false;
+    }
+    if(lookForObstacles(xa, ya, xb, yb, wallmap, '%')){
+       switch(sabbo){
+           case 1:
+               return lookForObstacles(xa, ya, xb, yb, wallmap, '$');
+               break;
+           case 2:
+               return lookForObstacles(xa, ya, xb, yb, wallmap, '&');
+               break;
+           case 3:
+               return lookForObstacles(xa, ya, xb, yb, wallmap, '#');
+               break;
+           case 4:
+               return lookForObstacles(xa, ya, xb, yb, wallmap, '`');
+               break;
+           case 5:
+               return lookForObstacles(xa, ya, xb, yb, wallmap, '>');
+               break;
+           case 6:
+               return lookForObstacles(xa, ya, xb, yb, wallmap, '<');
+               break;
+           case 7:
+               return lookForObstacles(xa, ya, xb, yb, wallmap, '^');
+               break;
+           default: 
+               return true;//no doors
+               break;
+    } 
+    }else return false;
+    
 }
 void cutscene(int colA, int colB, std::string filename) {
 
@@ -270,8 +367,10 @@ void cutscene(int colA, int colB, std::string filename) {
     refresh();
 }
 void drawBox(int x1, int y1, int w, int h, std::string type){
+    type = "windows";
     std::map<std::string, std::vector<std::string>> frames;
     frames["basic"] = {"─", "│", "┌", "┐", "└", "┘"};
+    frames["windows"] = {"-", "|", "+", "+", "+", "+"};
     frames["bold"] = {"━", "┃", "┏", "┓", "┗", "┛"};
     frames["rounded"] = {"─", "│", "╭", "╮", "╰", "╯"};
     frames["double"] = {"═", "║", "╔", "╗", "╚", "╝"};
@@ -348,13 +447,28 @@ std::map<char,std::vector<std::string>> loadLabels ( std::string filename ) {
     }
     return temp;
 }
+std::string key(int ch){
+    std::string temp;
+    switch(ch){
+        case ' ':
+            temp = "Spc";
+            break;
+        case 27:
+            temp = "Esc";
+            break;
+        default:
+            temp = (char)ch;
+            break;
+    }
+    return "["+temp+"]";
+}
 void loadKeyBinds ( std::string filename, keyBinds &temp ) {
     std::ifstream fileStream ( filename );
     if ( fileStream ) {
         fileStream >> temp.moveN >> temp.moveE >> temp.moveW >> temp.moveS;
         fileStream >> temp.moveNE >> temp.moveNW >> temp.moveSE >> temp.moveSW;
         fileStream >> temp.middle;
-        fileStream >> temp.kill >> temp.use >> temp.report >> temp.ready;
+        fileStream >> temp.kill >> temp.use >> temp.report >> temp.sabbotage;
         fileStream >> temp.quit;
 
         fileStream.close();
@@ -394,18 +508,18 @@ void drawHexagon(int x, int y){
 }
 void drawTesttube(int x, int y){
     for(int i = 0; i<6;i++){
-        mvprintw(y+i, x, "│");
-        mvprintw(y+i, x+6, "│");
+        mvprintw(y+i, x, "|");
+        mvprintw(y+i, x+6, "|");
     }
 //     mvprintw(y+6, x, "╲");
-    mvprintw(y+6, x, "╰─────╯");
+    mvprintw(y+6, x, "\\_____/");
 //     mvprintw(y+6, x+5, "╱");
     
 }
 void drawPipet(int x, int y){
     for(int i = 0; i<4;i++){
-        mvprintw(y+i, x, "│");
-        mvprintw(y+i, x+2, "│");
+        mvprintw(y+i, x, "|");
+        mvprintw(y+i, x+2, "|");
     }
 //     mvprintw(y+6, x, "╲");
     mvprintw(y+4, x, "\\ /");
@@ -413,7 +527,24 @@ void drawPipet(int x, int y){
 //     mvprintw(y+6, x+5, "╱");
     
 }
-bool handleVent(taskStruct tasks, std::map<char,std::vector<std::string>> &triggers, const keyBinds kBinds, std::map<int, crewmate>  &positions, std::vector<std::string> &gamemap,std::vector<std::string> &wallmap, playermodel model, int sockfd, int id){
+void drawHand(int x, int y){
+    int line = 0;
+    mvprintw(y+line, x, "             ____           ");line++; 
+    mvprintw(y+line, x, "        ___ /    \\ ___      ");line++; 
+    mvprintw(y+line, x, "       /   \\|    |/   \\ ___ ");line++; 
+    mvprintw(y+line, x, "       |    |    |    |/   \\");line++; 
+    mvprintw(y+line, x, " ___   |    |    |    |    |");line++; 
+    mvprintw(y+line, x, "/   \\  |    |    |    |    |");line++; 
+    mvprintw(y+line, x, "|    \\ |    |    |    |    |");line++; 
+    mvprintw(y+line, x, "|     \\|    |         |    |");line++; 
+    mvprintw(y+line, x, "\\                          |");line++; 
+    mvprintw(y+line, x, " \\                         |");line++; 
+    mvprintw(y+line, x, "  \\                        |");line++; 
+    mvprintw(y+line, x, "   \\                       /");line++; 
+    mvprintw(y+line, x, "    \\                     / ");line++; 
+    mvprintw(y+line, x, "     \\___________________/  ");line++; 
+}
+bool handleVent(taskStruct tasks, std::map<char,std::vector<std::string>> &triggers, const keyBinds kBinds, std::map<int, crewmate>  &positions, std::vector<std::string> &gamemap,std::vector<std::string> &wallmap, playermodel model, int sockfd, int id, int &sabbo){
     std::map<char, std::pair<int, int>> vent_positions= {
         {'a', {58, 12}},
         {'b', {10, 31}},
@@ -446,9 +577,9 @@ bool handleVent(taskStruct tasks, std::map<char,std::vector<std::string>> &trigg
         }
         bzero(buff, sizeof(buff));
         strcpy(buff, "u\n");
-        write(sockfd, buff, sizeof(buff));
+        send(sockfd, buff, sizeof(buff),0);
         bzero(buff, sizeof(buff));
-        read(sockfd, buff, sizeof(buff));
+        recv(sockfd, buff, sizeof(buff),0);
         //mvprintw(FOVY+1,0,"From Server : %s   ", buff);
         std::stringstream decoder;
         decoder << buff;
@@ -461,9 +592,9 @@ bool handleVent(taskStruct tasks, std::map<char,std::vector<std::string>> &trigg
             positions[cnt] = {a, b, c};
             cnt++;
         }
-        drawMap(gamemap, vent_positions[tasks.current].first, vent_positions[tasks.current].second);
+        drawMap(gamemap, wallmap, vent_positions[tasks.current].first, vent_positions[tasks.current].second, sabbo);
         
-       drawCharacters( vent_positions[tasks.current].first, vent_positions[tasks.current].second, positions, wallmap,model);
+       drawCharacters( vent_positions[tasks.current].first, vent_positions[tasks.current].second, positions, wallmap,model, sabbo);
         if(!positions[id].status){
             attron(COLOR_PAIR(id+1));
             mvprintw((FOVY/2)+TOPOFFSET, (FOVX/2), model.ghost.c_str());
@@ -472,6 +603,11 @@ bool handleVent(taskStruct tasks, std::map<char,std::vector<std::string>> &trigg
     }
 
     return result;
+}
+void drawSine(double f, double A, int t, int x){
+    for(int i = 0; i < x;i++){
+        mvprintw(6+(int)A*sin((2*PI/f)*i+t), i+1, "*");
+    }
 }
 void drawRing(const int x, const int y, const int angle, const int color){
    attron(COLOR_PAIR(color));
@@ -507,7 +643,7 @@ void drawRing(const int x, const int y, const int angle, const int color){
     mvaddch(y+2, x+1, '*');
     mvaddch(y+1, x+2, '*');
     mvaddch(y+1, x+3, '*');
-    attron(COLOR_PAIR(20));
+    attron(COLOR_PAIR(1));
    switch(angle%32){
         case 0:
             mvaddch(y, x+4, '*');
@@ -610,10 +746,377 @@ void drawRing(const int x, const int y, const int angle, const int color){
 int randInt( int low, int high){
     return low+rand()%(high-low);
 }
-bool handleTask(taskStruct tasks, std::map<char,std::vector<std::string>> &triggers, const keyBinds kBinds, std::map<int, crewmate>  &positions, std::vector<std::string> &gamemap,std::vector<std::string> &wallmap, playermodel model, int sockfd, int id, int &sample_countdown){
+std::map<int, int> checkLevels(const taskStruct tasks){
+    std::vector<char> rooms = {'t', 'z', 'C', 'K', 'N', 'R','T','Z'};
+    std::map<int, int> levels;
+    std::set<char> on_list;
+    for(auto t : tasks.list){
+        on_list.insert(t.first);
+    }
+    for(int i = 0; i<rooms.size();i++){
+        if(on_list.count(rooms[i])){
+            levels[i] = 3;
+        }
+    }
+    return levels;
+}
+bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &triggers, const keyBinds kBinds, std::map<int, crewmate>  &positions, std::vector<std::string> &gamemap,std::vector<std::string> &wallmap, playermodel model, int sockfd, int id, int &sample_countdown, int &sabbo){
     int  cdown = 18;
     char taskName = tasks.current;
-    if(triggers[taskName][2]=="upload"){
+    if(triggers[taskName][2]=="oxygen"){
+         clear();
+        bool taskloop = true;
+        int ch;
+        char buff[MAX];
+        bzero(buff, sizeof(buff));
+        int xOffset = 31;
+        std::vector<int> to_choose = {0,1,2,3,4,5,6,7,8};
+        std::vector<int> combination;
+        srand(time(NULL));
+        for(int i=0;i<4;i++){
+            int r = rand()%to_choose.size();
+            combination.push_back(to_choose[r]);
+            to_choose.erase(to_choose.begin()+r);
+        }
+        drawBox(xOffset, 0, 30, 16, "basic");
+        
+        for(int y =0; y<3;y++){
+            for(int x = 0; x<3;x++){
+                attron(COLOR_PAIR(6));
+                drawBox(xOffset+1+10*x, 1+5*y, 8,4,"basic");
+                attron(COLOR_PAIR(20));
+                mvprintw(3+5*y, xOffset+5+10*x, "%d",y*3+x+1);
+            }
+        }
+        int chosen = -1;
+        
+        int current = 0;
+        
+        bool pressed = false;
+        attron(COLOR_PAIR(1));
+        drawBox(2,2,13, 2, "double");
+        mvprintw(3, 3, "[ ][ ][ ][ ]");
+        attron(COLOR_PAIR(12));
+        
+        drawSquare(4, 10, 11, 4, " ");
+        mvprintw(11, 5, "The code:");
+        for(int i = 0; i < combination.size(); i++){
+            mvprintw(13, 6+i*2, "%d", combination[i]+1);
+        }
+        attron(COLOR_PAIR(2));
+        while(taskloop){
+            ch = getch();
+            if(ch==kBinds.quit){
+                clear();
+                return false;
+            }else if(ch == kBinds.moveNW){
+                chosen = 0;
+            }else if(ch == kBinds.moveN){
+                chosen = 1;
+            }else if(ch == kBinds.moveNE){
+                chosen = 2;
+            }else if(ch == kBinds.moveW){
+                chosen = 3;
+            }else if(ch == kBinds.middle){
+                chosen = 4;
+            }else if(ch == kBinds.moveE){
+                chosen = 5;
+            }else if(ch == kBinds.moveSW){
+                chosen = 6;
+            }else if(ch == kBinds.moveS){
+                chosen = 7;
+            }else if(ch == kBinds.moveSE){
+                chosen = 8;
+            }else if(ch == ERR){
+                chosen = -1;
+               
+            }
+            if(chosen>-1){
+                pressed = true;
+                attron(COLOR_PAIR(2));
+                drawBox(xOffset+1+10*(chosen%3), 1+5*((int)chosen/3), 8,4,"bold");
+                if(combination[current] == chosen){
+                    attron(COLOR_PAIR(1));
+                    mvprintw(3,4+current*3, "%d", chosen+1);
+                    current++;
+                    if(current == combination.size()){
+                        taskloop = false;
+                    }
+                }else{
+                    if(pressed){
+                        current = 0;
+                        attron(COLOR_PAIR(1));
+                        mvprintw(3, 3, "[ ][ ][ ][ ]");
+                        }
+                }
+            
+            }else{
+                 pressed = false;
+                for(int y =0; y<3;y++){
+                    for(int x = 0; x<3;x++){
+                        attron(COLOR_PAIR(6));
+                        drawBox(xOffset+1+10*x, 1+5*y, 8,4,"basic");
+                    }
+                }
+            }
+            bzero(buff, sizeof(buff));  
+            strcpy(buff, "u\n");
+            send(sockfd, buff, sizeof(buff),0);
+            bzero(buff, sizeof(buff));
+            recv(sockfd, buff, sizeof(buff),0);
+            
+            std::stringstream decoder;
+            decoder << buff;
+            char mode;
+            int a, b;
+            decoder >> mode;
+            if(mode == 't'){
+                tasks.list.clear();
+                while(decoder >> a >> b) {
+                    tasks.list[(char)a] = b;
+                }
+                tasks.current = 0;
+                tasks.list.erase('3');
+                taskloop = false;
+            }else{
+                decoder.clear();
+            }
+        }
+        
+        
+        attron(COLOR_PAIR(4));
+        printCenter("Task completed!", FOVX, FOVY/2);
+        wait(20);
+        clear();
+    }else if(triggers[taskName][2]=="lights"){
+         clear();
+        bool taskloop = true;
+        int ch;
+        bool lights_s[5];
+        char buff[MAX];
+        bzero(buff, sizeof(buff));
+        int space = FOVX/6;
+        strcpy(buff, "u\n");
+        send(sockfd, buff, sizeof(buff),0);
+            bzero(buff, sizeof(buff));
+            recv(sockfd, buff, sizeof(buff),0);
+            mvprintw(FOVY+1, 0, buff);
+            std::stringstream decoder;
+            decoder << buff;
+            char mode;
+            int a;
+            
+            decoder >> mode;
+            if(mode == 'q'){
+                for(int i = 0; i< 5;i++){
+                    decoder >> a;
+                    lights_s[i] = (bool)a;
+                }
+            }
+        while(taskloop){
+            ch = getch();
+            bzero(buff, sizeof(buff));
+            if(ch == kBinds.quit){
+                clear();
+                return false;
+            }
+            else if(ch == '1'){
+                strcpy(buff, "l1\n");
+            }
+            else if(ch == '2'){
+                strcpy(buff, "l2\n");
+            }
+            else if(ch == '3'){
+                strcpy(buff, "l3\n");
+            }
+            else if(ch == '4'){
+                strcpy(buff, "l4\n");
+            }
+            else if(ch == '5'){
+                strcpy(buff, "l5\n");
+            }else{
+                strcpy(buff, "u\n");
+            }
+            
+           
+            send(sockfd, buff, sizeof(buff),0);
+            bzero(buff, sizeof(buff));
+            recv(sockfd, buff, sizeof(buff),0);
+            
+            std::stringstream decoder;
+            decoder << buff;
+            char mode;
+            int a, b;
+            decoder >> mode;
+            if(mode == 'q'){
+                drawBox(0, 0, FOVX, FOVY/3, "bold");
+                drawBox(0, FOVY/3+1, FOVX, 2*FOVY/3, "double");
+                decoder >> b;
+                for(int i = 0; i< 5;i++){
+                    decoder >> a;
+                    lights_s[i] = (bool)a;
+                    attron(COLOR_PAIR(20));
+                    mvprintw(FOVY/3+3, 1+space+(space*i), "  #  ");
+                    mvprintw(FOVY/3+4, 1+space+(space*i), "  #  ");
+                    mvprintw(FOVY/3+5, 1+space+(space*i), "  #  ");
+                    mvprintw(FOVY/3+6, 1+space+(space*i), "  %d  ", i+1);
+                    mvprintw(FOVY/3+7, 1+space+(space*i), "  #  ");
+                    mvprintw(FOVY/3+8, 1+space+(space*i), "  #  ");
+                    mvprintw(FOVY/3+9, 1+space+(space*i), "  #  ");
+                    attron(COLOR_PAIR(4));
+                    if(a)mvprintw(FOVY/3+3, 1+space+(space*i), "[===]");
+                    else mvprintw(FOVY/3+9, 1+space+(space*i), "[===]");
+                    
+                }
+            }
+            if(mode == 't'){
+                tasks.list.clear();
+                while(decoder >> a >> b) {
+                    tasks.list[(char)a] = b;
+                }
+                tasks.current = 0;
+                tasks.list.erase('2');
+                for(int i = 0; i< 5;i++){
+                    attron(COLOR_PAIR(20));
+                    mvprintw(FOVY/3+9, 1+space+(space*i), "  #  ");
+                    attron(COLOR_PAIR(4));
+                    mvprintw(FOVY/3+3, 1+space+(space*i), "[===]");
+                }
+                taskloop = false;
+            } 
+        }
+        attron(COLOR_PAIR(4));
+        printCenter("Power restored!", FOVX, FOVY/3);
+        wait(20);
+        clear();
+    }else if(triggers[taskName][2]=="jam"){
+         clear();
+        bool taskloop = true;
+        int ch;
+        double f0=15+(randInt(-5, 5)/2);
+        double f=32;
+        int A0=4+randInt(-2, 2);
+        int t = 0, A=2;
+        while(taskloop){
+            ch = getch();
+            if(ch == kBinds.quit){
+                clear();
+                return false;
+            }
+            else if(ch == kBinds.moveW){
+                if(f<40)f++;
+            }
+            else if(ch == kBinds.moveE){
+                if(f>1)f--;
+            }
+            else if(ch == kBinds.moveN){
+                if(A<5)A++;
+            }
+            else if(ch == kBinds.moveS){
+                if(A>0)A--;
+            }
+//             else if(ch == kBinds.moveNE){
+//                 if(d<5)d++;
+//             }
+//             else if(ch == kBinds.moveNW){
+//                 if(d>-5)d--;
+//             }
+            clear();
+            
+            attron(COLOR_PAIR(2));
+            
+            drawSine(f0,A0,t,FOVX-2);
+            attron(COLOR_PAIR(1));
+            if(f==f0&&A==A0){
+                attron(COLOR_PAIR(4));
+                taskloop = false;
+            }
+            drawSine(f,A,t,FOVX-2);
+//             mvprintw(FOVY+1,0,"%f, %f, %f, %f, %d", f, f0, A, A0, d);
+            attron(COLOR_PAIR(20));
+            drawBox(0,0,FOVX, 11, "bold");
+            drawBox(0,12,FOVX, FOVY-12, "double");
+            printCenter("Amplitude: "+std::to_string(A)+" ", FOVX,  FOVY-12, 0, 11);
+            printCenter("Frequency: "+std::to_string(1000/f)+"kHz  " , FOVX,  FOVY-12, 0, 13);
+            t++;
+        }
+        
+        int cdown = 20;
+        while(cdown){
+            clear();
+            attron(COLOR_PAIR(4));
+            drawSine(f0,A0,t,FOVX-2);
+            printCenter("Communications restored!", FOVX, FOVY/2, 0, -2);
+            attron(COLOR_PAIR(20));
+            drawBox(0,0,FOVX, 11, "bold");
+            drawBox(0,12,FOVX, FOVY-12, "double");
+            printCenter("Amplitude: "+std::to_string(A)+" ", FOVX,  FOVY-12, 0, 11);
+            printCenter("Frequency: "+std::to_string(1000/f)+"kHz  " , FOVX,  FOVY-12, 0, 13);
+            getch();
+            cdown--;
+            t++;
+        }
+        clear();
+        return true;
+    }else if(triggers[taskName][2]=="hand"){
+        clear();
+        bool taskloop = true;
+        int ch;
+        int y=0;
+        bool reverse = false;
+        char buff[MAX];
+        while(taskloop){
+            ch = getch();
+            if(ch == kBinds.quit){
+                clear();
+                return false;
+            }
+            if(reverse){
+                if(y>1)y--;
+                if(y==1)reverse=false;
+            }else{
+                if(y<FOVY-1)y++;
+                if(y==FOVY-1)reverse=true;
+            }
+            attron(COLOR_PAIR(id+1));
+            drawHand(2,1);
+            attron(COLOR_PAIR(2));
+            drawSquare(0, y, FOVY*2, 1, "#");
+            drawSquare(0, y-1, FOVY*2, 1, " ");
+            drawSquare(0, y+1, FOVY*2, 1, " ");
+            attron(COLOR_PAIR(20));
+            drawBox(0,0,FOVY*2,FOVY,"bold");
+            bzero(buff, sizeof(buff));
+            strcpy(buff, "u\n");
+            send(sockfd, buff, sizeof(buff),0);
+            bzero(buff, sizeof(buff));
+            recv(sockfd, buff, sizeof(buff),0);
+            mvprintw(FOVY+1, 0, buff);
+            std::stringstream decoder;
+            decoder << buff;
+            char mode;
+            int a, b;
+            decoder >> mode;
+//             if(mode == 'w'){
+//                 tasks.current = 0;
+//                 tasks.list.erase('1');
+//                 tasks.list.erase('0');
+//                 taskloop = false;
+//             }
+            if(mode == 't'){
+                tasks.list.clear();
+                while(decoder >> a >> b) {
+                    tasks.list[(char)a] = b;
+                }
+                tasks.current = 0;
+                tasks.list.erase('1');
+                tasks.list.erase('0');
+                taskloop = false;
+            }   
+        }
+        clear();
+        return false; 
+    }else if (triggers[taskName][2]=="upload"){
         clear();
         int taskload = (FOVX-6)*4;
         int ch;
@@ -799,10 +1302,10 @@ bool handleTask(taskStruct tasks, std::map<char,std::vector<std::string>> &trigg
         printCenter("Task completed!", FOVX, FOVY/2);
         wait(20);
         clear();
-        return false;
+        return true;
     }else if(triggers[taskName][2]=="calibrate"){
         int ch; 
-        int delay = 2;
+        int delay = 3;
         clear();
         int stage = 0;
         int a=0, b=0, c=0;
@@ -988,7 +1491,7 @@ bool handleTask(taskStruct tasks, std::map<char,std::vector<std::string>> &trigg
             attron(COLOR_PAIR(20));
             drawBox(1, 1, 3*(FOVX/4), FOVY-1, "basic");
             for(int i = 0; i<=FOVY; i++){
-//                 mvprintw(i, 3*(FOVXe/4)+6, "  #  ");
+                 mvprintw(i, 3*(FOVX/4)+6, "  #  ");
             }
              attron(COLOR_PAIR(1));
              mvprintw(t, 3*(FOVX/4)+6, "[===]");
@@ -1010,7 +1513,7 @@ bool handleTask(taskStruct tasks, std::map<char,std::vector<std::string>> &trigg
                 mvprintw(i, 3*(FOVX/4)+6, "  #  ");
             }
              attron(COLOR_PAIR(1));
-             mvprintw(FOVY, 3*(FOVX/4)+6, "<===>");
+             mvprintw(FOVY, 3*(FOVX/4)+6, "[===]");
              attron(COLOR_PAIR(20));
             cdown--;y++;
         }
@@ -1286,14 +1789,14 @@ bool handleTask(taskStruct tasks, std::map<char,std::vector<std::string>> &trigg
         return true;
     }else if(triggers[taskName][2]=="divert"){
         int knob = 0;
-        std::map<int, int> levels;
-        std::vector<char> rooms = {'t', 'z', 'C', 'K', 'N', 'R','T','Z'};
+        std::map<int, int> levels = checkLevels(tasks);
+                                                                         
         std::vector<std::string> roomNames= {"Comms", "EN.Up", "EN.Dn", "Navig", " O2", "Secur","Shlds","Wpns"};
-        for(int i = 0; i<rooms.size();i++){
-            if(tasks.list[rooms[i]]){
-                levels[i] = 3;
-            }
-        }
+        
+                                     
+                              
+             
+         
         bool taskloop = true;
         int ch;
         int d = FOVX/9;
@@ -1373,10 +1876,10 @@ bool handleTask(taskStruct tasks, std::map<char,std::vector<std::string>> &trigg
             }
             bzero(buff, sizeof(buff));
             strcpy(buff, "u\n");
-            write(sockfd, buff, sizeof(buff));
+            send(sockfd, buff, sizeof(buff),0);
             bzero(buff, sizeof(buff));
-            read(sockfd, buff, sizeof(buff));
-            mvprintw(FOVY+1,0,"From Server : %s   ", buff);
+            recv(sockfd, buff, sizeof(buff),0);
+            //mvprintw(FOVY+1,0,"From Server : %s   ", buff);
             std::stringstream decoder;
             decoder << buff;
             int a=0, b=0, c=0, cnt=0;
@@ -1388,8 +1891,8 @@ bool handleTask(taskStruct tasks, std::map<char,std::vector<std::string>> &trigg
                 positions[cnt] = {a, b, c};
                 cnt++;
             }
-            drawMap(gamemap, x[cam], y[cam], true);
-            drawCharacters( x[cam], y[cam], positions, wallmap,model);
+            drawMap(gamemap, wallmap, x[cam], y[cam], sabbo, true);
+            drawCharacters( x[cam], y[cam], positions, wallmap,model, sabbo);
             drawBox(0,0, FOVX, FOVY, "bold");
             printCenter("Camera: "+std::to_string(cam+1), FOVX, 1);
         }
@@ -1702,9 +2205,9 @@ bool handleTask(taskStruct tasks, std::map<char,std::vector<std::string>> &trigg
             }
             bzero(buff, sizeof(buff));
             strcpy(buff, "u\n");
-            write(sockfd, buff, sizeof(buff));
+            send(sockfd, buff, sizeof(buff), 0);
             bzero(buff, sizeof(buff));
-            read(sockfd, buff, sizeof(buff));
+            recv(sockfd, buff, sizeof(buff), 0);
             //mvprintw(FOVY+1,0,"From Server : %s   ", buff);
             std::stringstream decoder;
             decoder << buff;
@@ -1717,9 +2220,9 @@ bool handleTask(taskStruct tasks, std::map<char,std::vector<std::string>> &trigg
                 positions[cnt] = {a, b, c};
                 cnt++;
             }
-            drawMap(gamemap, 122, 37);
+            drawMap(gamemap, wallmap, 122, 37, sabbo);
             
-            drawCharacters( 122, 37, positions, wallmap,model);
+            drawCharacters( 122, 37, positions, wallmap,model, sabbo);
             if(!positions[id].status){
                 attron(COLOR_PAIR(id+1));
                 mvprintw((FOVY/2)+TOPOFFSET, (FOVX/2), model.ghost.c_str());
@@ -1732,6 +2235,8 @@ bool handleTask(taskStruct tasks, std::map<char,std::vector<std::string>> &trigg
             }
             attron(COLOR_PAIR(20));
             mvprintw((int)FOVY*0.75, FOVX-10, "]");
+            drawSquare(FOVX/2+6, FOVY/6-1, FOVX/3-3, FOVY/2-1, " ");
+            drawBox(FOVX/2+6, FOVY/6-1, FOVX/3-3, FOVY/2-1, "basic");
             printCenter("Scanning body...", FOVX/2, FOVY/3, FOVX/2);
             if(taskload<(FOVX-6)*3) printCenter("COLOR: "+colors[id], FOVX/2, FOVY/3, FOVX/2, 2);
             if(taskload<(FOVX-6)*2) printCenter("WIDTH: 2 chars", FOVX/2, FOVY/3, FOVX/2, 3);
@@ -1845,9 +2350,54 @@ bool handleTask(taskStruct tasks, std::map<char,std::vector<std::string>> &trigg
     return true;
     
 }
+void pickSabbotage(char buff[MAX], int sabbo, int sabbo_countdown, keyBinds kBinds){
+    if(sabbo > 0){
+        strcpy(buff, "u\n");
+    }else{
+        bool pickloop = true;
+        int ch;
+        std::string message = "s";
+        clear();
+        while(pickloop){
+            ch = getch();
+            if(ch == kBinds.quit||ch==kBinds.sabbotage){
+                strcpy(buff, "u\n");
+                pickloop = false;
+            }else if(ch>'0'&&ch<='9'){
+                message += std::to_string(ch-'0')+"\n";
+                strcpy(buff, message.c_str());
+                pickloop = false;
+            }else if(ch == kBinds.kill){
+                strcpy(buff, "sa\n");
+                pickloop = false;
+            }else if(ch == kBinds.use){
+                strcpy(buff, "sb\n");
+                pickloop = false;
+            }
+            printCenter("Sabbotage!", FOVX, 1);
+            if(sabbo_countdown){
+                attron(COLOR_PAIR(1));
+                printCenter("You cannot sabbotage yet.", FOVX, 1, 0, 1);
+            }
+            mvprintw(2, 5, (key('1')+" Shut doors in cafeteria ").c_str());
+            mvprintw(3, 5, (key('2')+" Shut doors in medbay").c_str());
+            mvprintw(4, 5, (key('3')+" Shut doors in electical ").c_str());
+            mvprintw(5, 5, (key('4')+" Shut doors in security ").c_str());
+            mvprintw(6, 5, (key('5')+" Shut doors in upper engine").c_str());
+            mvprintw(7, 5, (key('6')+" Shut doors in lower engine").c_str());
+            mvprintw(8, 5, (key('7')+" Shut doors in storage").c_str());
+            mvprintw(9, 5, (key('8')+" Sabbotage communications").c_str());
+            mvprintw(10, 5, (key('9')+" Power down electrical").c_str());
+            mvprintw(11, 5, (key(kBinds.kill)+" Reactor core meltdown").c_str());
+            mvprintw(12, 5, (key(kBinds.use)+" Deplete oxygen reserves").c_str());
+            attron(COLOR_PAIR(20));
+        }
+    }
+    clear();
+}
 void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewmate &ghost, std::vector<std::string> &gamemap, std::vector<std::string> &wallmap,playermodel model, std::map<char,std::vector<std::string>> &triggers, bool kb, taskStruct &tasks)
 {
-    
+    int sabbo = 0, sabbo_countdown=0;
     bool game_started = false, murdered=false, voting=false;
     int role_countdown = 0, killing_cutscene_countdown=0, murderer=-1, murder_cutscene_countdown=0, ejection_cutscene_countdown=0, winner_countdown=0;
     int loading=1;
@@ -1869,7 +2419,7 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
         kBinds.moveN = KEY_UP;
         kBinds.moveW = KEY_LEFT;
         kBinds.moveS = KEY_DOWN;
-        kBinds.ready = 'r';
+        kBinds.sabbotage = 'r';
         kBinds.report = 'c';
         kBinds.use = 'z';
         kBinds.quit = 'q';
@@ -1879,7 +2429,7 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
 
         refresh();
         got_ch = getch();
-        int sample_countdown = -1;
+        if(sample_countdown>0)sample_countdown--;
         bzero(buff, sizeof(buff));
         if(role_countdown) {
             strcpy(buff, "u\n");
@@ -1896,7 +2446,7 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
                 else strcpy(buff, "m6\n");
             } else if(got_ch == kBinds.middle||got_ch=='5') {
                 if(voting)strcpy(buff, "v5\n");
-                else strcpy(buff, "u\n");
+                else strcpy(buff, "e\n");
             } else if(got_ch == kBinds.moveS||got_ch=='2') {
                 if(voting) strcpy(buff, "v2\n");
                 else  strcpy(buff, "m2\n");
@@ -1912,6 +2462,9 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
             } else if(got_ch == kBinds.moveNE||got_ch=='9') {
                 if(voting)strcpy(buff, "v9\n");
                 else strcpy(buff, "m9\n");
+            } else if(got_ch == kBinds.sabbotage) {
+                if(game_started&&positions[id].status>>1%2) pickSabbotage(buff, sabbo, sabbo_countdown, kBinds);
+                else strcpy(buff, "u\n");
             } else if(got_ch == ERR) {
                 strcpy(buff, "u\n");
             } else if(got_ch == kBinds.kill) {
@@ -1922,22 +2475,20 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
                         previous_status[el.first] = el.second.status;
                     }
                 } else {
-                    strcpy(buff, "u\n");
+                    strcpy(buff, "e\n");
                 }
             } else if(got_ch == kBinds.report) {
                 if(positions[id].status % 2)strcpy(buff, "c\n");
-                else strcpy(buff, "u\n");
+                else strcpy(buff, "e\n");
             } else if(got_ch == kBinds.use) {
                 if(game_started) strcpy(buff, "t\n");
-                else strcpy(buff, "u\n");
-            } else if(got_ch == kBinds.ready) {
-                strcpy(buff, "r\n");
+                else strcpy(buff, "r\n");
             } else if(got_ch == kBinds.quit) {
-                endwin();
-                closesocket(sockfd);
+                // delwin();
+                close(sockfd);
                 break;
             } else {
-                strcpy(buff, "u\n");
+                strcpy(buff, "e\n");
             }
 
         }
@@ -1946,7 +2497,7 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
         bzero(buff, sizeof(buff));
         recv(sockfd, buff, sizeof(buff), 0);
 
-        mvprintw(FOVY+1,0,"From Server : %s   ", buff);
+        //mvprintw(FOVY+1,0,"From Server : %s   ", buff);
         std::stringstream decoder;
         decoder << buff;
         int a=0, b=0, c=0, cnt=0;
@@ -1965,7 +2516,7 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
                 clear();
             }
             
-            decoder >> tasksPercent >> killing_timeout >> cams;
+            decoder >> tasksPercent >> killing_timeout >> cams >> sabbo >> sabbo_countdown;
             while(decoder >> a >> b >> c) {
                 mvprintw(positions[cnt].y, positions[cnt].x, " ");
                 positions[cnt] = {a, b, c};
@@ -1993,7 +2544,7 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
             }
         } else if (mode == 'q'){
             decoder >> a;
-            game_started = true;                    
+            game_started = true;
             tasks.current = (char)a;
             int cnt = 0;
             
@@ -2005,6 +2556,9 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
                 murdered=true;
                 murder_cutscene_countdown = 20;
             }
+            if(!game_started) {
+                game_started = true;
+            }
             if(voting) {
                 voting = false;
                 ejection_cutscene_countdown = 40;
@@ -2013,7 +2567,7 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
             }
             decoder >> tasksPercent;
             drawTaskbar(tasksPercent);
-            decoder >> ghost.x >> ghost.y >> murderer;
+            decoder >> ghost.x >> ghost.y >> murderer >> sabbo >> sabbo_countdown;
             while(decoder >> a >> b >> c) {
                 mvprintw(positions[cnt].y, positions[cnt].x, " ");
                 positions[cnt] = {a, b, c};
@@ -2025,6 +2579,8 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
                 voting = false;
                 clear();
             }
+            sabbo = 0;
+            sabbo_countdown = 0;
             if(tasks.list.size()){
                 tasks.list.clear();
                 tasksPercent = 0;
@@ -2065,6 +2621,7 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
                 clear();
         } else if(winner_countdown) {
             winner_countdown--;
+            clear();
             if(winner==1)printCenter("Impostors win.", FOVX, FOVY);
             else printCenter("Crewmates win.", FOVX, FOVY);
             if(!winner_countdown)clear();
@@ -2152,7 +2709,7 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
                 case 'l':
                 case 'm':
                 case 'n': //vent
-                    success = handleVent(tasks, triggers, kBinds, positions, gamemap,wallmap, model,  sockfd, id);
+                    success = handleVent(tasks, triggers, kBinds, positions, gamemap,wallmap, model,  sockfd, id, sabbo);
                     break;
                 case 't'://accept diverted power
                 case 'z':
@@ -2162,26 +2719,27 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
                 case 'R':
                 case 'T':
                 case 'Z':
-                    if(!tasks.list['x'])success = handleTask(tasks, triggers, kBinds, positions, gamemap,wallmap, model,  sockfd, id, sample_countdown);
+                    if(!tasks.list['x'])success = handleTask(tasks, triggers, kBinds, positions, gamemap,wallmap, model,  sockfd, id, sample_countdown, sabbo);
                     break;
                 case 'B':
                 case 'E':
                     if(!tasks.list['U'])
                         success = true;
                     break;
+                    break;
                 case 'U'://fuel storage
                     success = true;
                     break;
                 case 'M':
                 case 'r'://empty 
-                    success = handleTask(tasks, triggers, kBinds, positions, gamemap,wallmap, model, sockfd, id, sample_countdown);
+                    success = handleTask(tasks, triggers, kBinds, positions, gamemap, wallmap, model, sockfd, id, sample_countdown, sabbo);
                     break;
                 case 'W':
                     if(!(tasks.list['M'])&&!(tasks.list['r']))
-                        success = handleTask(tasks, triggers, kBinds, positions, gamemap,wallmap, model, sockfd, id, sample_countdown);
+                        success = handleTask(tasks, triggers, kBinds, positions, gamemap, wallmap, model, sockfd, id, sample_countdown, sabbo);
                     break;
                 default:
-                    success = handleTask(tasks, triggers, kBinds, positions, gamemap,wallmap, model,  sockfd, id, sample_countdown);
+                    success = handleTask(tasks, triggers, kBinds, positions, gamemap, wallmap, model, sockfd, id, sample_countdown, sabbo);
                     break;
             }
             
@@ -2197,10 +2755,51 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
             
         } else {
             //getch();
-            printTasks(tasks, triggers, (positions[id].status>>1%2));
+            printTasks(tasks, triggers, positions[id].status, sample_countdown, sabbo);
             if(positions[id].status%2) {
-                drawMap(gamemap, positions[id].x, positions[id].y, cams);
+                drawMap(gamemap, wallmap, positions[id].x, positions[id].y, sabbo, cams);
                 char trig = wallmap[positions[id].y][positions[id].x];
+                std::string controls;
+                controls += key(kBinds.moveN);
+                controls += key(kBinds.moveW);
+                controls += key(kBinds.moveE);
+                controls += key(kBinds.moveS);
+                controls += "move ";
+                controls += key(kBinds.moveNW);
+                controls += key(kBinds.moveNE);
+                controls += key(kBinds.moveSW);
+                controls += key(kBinds.moveSE);
+                controls += "diagonal ";
+                if(game_started){
+                controls += key(kBinds.use);
+                controls += "use ";
+                controls += key(kBinds.report);
+                controls += "report ";
+                }else{
+                controls += key(kBinds.use);
+                controls += "ready ";
+                }
+                controls += key(kBinds.quit);
+                controls += "quit ";
+                
+                if(positions[id].status == 3){
+                    controls += key(kBinds.kill);
+                    controls += "kill ";
+                    controls += key(kBinds.sabbotage);
+                    controls += "sabbotage ";
+                    attron(COLOR_PAIR(8));
+                    move(FOVY+2, 0);
+                    if(killing_timeout)printw("Killing timeout: %d ", killing_timeout/10);
+                    if(sabbo_countdown)printw(" Sabbotage timeout %d  ", sabbo_countdown/10);
+                   attron(COLOR_PAIR(20));
+                 if(!killing_timeout&&!sabbo_countdown)printw("                                          ");
+                   
+                    
+                }
+                move(FOVY+1, 0);
+                attron(COLOR_PAIR(14));
+                printw(controls.c_str());
+                 attron(COLOR_PAIR(20));
                 if(trig != ' ') {
                     mvprintw(FOVY+3, 0, "current trigger type: %s    ", triggers[trig][0].c_str());
                     mvprintw(FOVY+4, 0, "location: %s      ", triggers[trig][1].c_str());
@@ -2208,41 +2807,60 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
                 }
                 int y = positions[id].y;
                 int x = positions[id].x;
-                drawCharacters( x, y, positions, wallmap,model);
+                drawCharacters( x, y, positions, wallmap,model, sabbo);
             } else {
-                drawMap(gamemap, ghost.x, ghost.y);
+                drawMap(gamemap, wallmap, ghost.x, ghost.y, sabbo);
+                char trig = wallmap[ghost.y][ghost.x];
                 int y = ghost.y;
                 int x = ghost.x;
                 attron(COLOR_PAIR(id+1));
                 move((FOVY/2)+TOPOFFSET, (FOVX/2));
-                //addrawch(L'𓃇');
+                addrawch(L'𓃇');
                 attron(COLOR_PAIR(20));
-                drawCharacters( x, y, positions, wallmap,model);
-                                                      
-                                                      
+                drawCharacters( x, y, positions, wallmap,model, sabbo);
+                if(trig != ' ') {
+                    mvprintw(FOVY+3, 0, "current trigger type: %s    ", triggers[trig][0].c_str());
+                    mvprintw(FOVY+4, 0, "location: %s      ", triggers[trig][1].c_str());
+                    mvprintw(FOVY+5, 0, "argument: %s      ", triggers[trig][2].c_str());
+                }
 
             }
             if(numb!="") {
                 printCenter("Waiting for players.", FOVX, FOVY, 0, 0);
                 printCenter(numb, FOVX, FOVY, 0, 2);
-                              
-                                                                                   
             }
             drawTaskbar(tasksPercent);
                      
                  
 
 
+            if(sabbo == 9){
+                attron(COLOR_PAIR(1));
+                printCenter("Lights out!", FOVX, FOVY/2);
+                attron(COLOR_PAIR(20));
+            }else if(sabbo == 10){
+                if(sabbo_countdown%40>20)attron(COLOR_PAIR(1));
+                else attron(COLOR_PAIR(8));
+                printCenter(" Reactor overload! ", FOVX, FOVY/2);
+                printCenter(" Core meltdown in: "+std::to_string(sabbo_countdown/(10*positions.size()))+" ", FOVX, FOVY/2, 0, 1);
+                attron(COLOR_PAIR(20));
+            }else if(sabbo == 11){
+                if(sabbo_countdown%40>20)attron(COLOR_PAIR(1));
+                else attron(COLOR_PAIR(8));
+                printCenter(" Oxygen depleted! ", FOVX, FOVY/2);
+                printCenter(" Reserves last for: "+std::to_string(sabbo_countdown/(10*positions.size()))+" ", FOVX, FOVY/2, 0, 1);
+                attron(COLOR_PAIR(20));
+            }
         }
 
     }
 }
-void drawCharacters(const int x, const int y, std::map<int, crewmate>  &positions, std::vector<std::string> &wallmap, playermodel model){
+void drawCharacters(const int x, const int y, std::map<int, crewmate>  &positions, std::vector<std::string> &wallmap, playermodel model, int sabbo){
     for(auto ch : positions) {
         int posx = ch.second.x-x+(FOVX/2);
         int posy = ch.second.y-y+(FOVY/2);
 
-        if(posx<FOVX&&posy<FOVY&&LOS(x, y, ch.second.x, ch.second.y, wallmap)) {
+        if(posx<FOVX&&posy<FOVY&&LOS(x, y, ch.second.x, ch.second.y, wallmap, sabbo)) {
             attron(COLOR_PAIR(ch.first+1));
             if(ch.second.status %2){
                 move(posy+TOPOFFSET, posx);
@@ -2251,8 +2869,8 @@ void drawCharacters(const int x, const int y, std::map<int, crewmate>  &position
             }
             else {
                 move(posy+TOPOFFSET, posx);
-                printw("%lc", u8"𐐌");
-                //addrawch(L'𐐌');
+                //printw("%lc", u8"𐐌");
+                addrawch(L'𐐌');
                 //addrawch(L'𓂍');//159 145 187	
                 //addrawch(240);//240 147 130 141 	
                 //addrawch(159);//240 147 130 141 	
@@ -2264,35 +2882,141 @@ void drawCharacters(const int x, const int y, std::map<int, crewmate>  &position
     }
 }
 
-void printTasks(taskStruct &tasks, std::map<char,std::vector<std::string>> &triggers, bool impostor){
-    if(impostor){
-        mvprintw(0, FOVX, "|  Fake tasks:");
-        int line = 1;
-        std::string desc;
-        for(auto t : tasks.list){
-            desc  = "| "+triggers[t.first][2]+" in "+triggers[t.first][1];
-            
-            mvprintw(line, FOVX, desc.c_str());
+void printLine(std::string label, std::string desc, int &line, int color){
+    
+    mvprintw(line, FOVX, "|[");
+    if(label=="Y"||label=="::")attron(COLOR_PAIR(4));
+    if(label=="M"||label=="?")attron(COLOR_PAIR(3));
+    if(label=="T")attron(COLOR_PAIR(6));
+    if(label=="#"||label=="w")attron(COLOR_PAIR(2));
+    if(label=="-()"||label=="<()"||label=="(( ))"||label=="@")attron(COLOR_PAIR(1));
+    if(label=="}{"||label=="!"||label=="[!]")attron(COLOR_PAIR(5));
+    attron(A_BOLD);
+    printw(label.c_str());
+    attron(COLOR_PAIR(20));
+    attroff(A_BOLD);
+    printw("]");
+    attron(COLOR_PAIR(color));
+    printw(desc.c_str());
+    line++;
+    attron(COLOR_PAIR(20));
+    printw("             ");
+}
+void printTasks(taskStruct &tasks, std::map<char,std::vector<std::string>> &triggers, int status, int sample_countdown, int sabbo){
+    int line = 0;
+    if(!(status%2)){
+            attron(COLOR_PAIR(1));
+            mvprintw(line, FOVX, "|You are dead. Finish your tasks.       ");
+            line++;
+            attron(COLOR_PAIR(20));
+    }
+    if(sabbo == 8){
+        attron(COLOR_PAIR(20));
+        mvprintw(line, FOVX, "|");
+        attron(COLOR_PAIR(1));
+        printw("Communications system sabbotaged!             ");line++;
+        attron(COLOR_PAIR(20));
+        mvprintw(line, FOVX, "|");
+         attron(COLOR_PAIR(1));
+        printw("Unable to display tasks             ");line++;
+        attron(COLOR_PAIR(20));
+        printLine("[==]","Restore connection in communications", line, 20-16*!tasks.list['5']);
+        while(line<FOVY){
+            mvprintw(line, FOVX, "|                              ");
             line++;
         }
+        
+        attron(COLOR_PAIR(20)); 
+        return;
+    }
+    if(status>>1%2){
+        
+        attron(COLOR_PAIR(1));
+        mvprintw(line, FOVX, "|Sabbotage and kill                 ");
+        attron(COLOR_PAIR(20));
+        line++;
+        mvprintw(line, FOVX, "|Fake tasks:              ");
+        line++;
+        
     }else{
-        mvprintw(0, FOVX, "|  Your tasks:");
-        int line = 1;
-        std::string desc;
-        for(auto t : tasks.list){
-            desc  = triggers[t.first][2]+" in "+triggers[t.first][1];
-            attron(COLOR_PAIR(20));
-            mvprintw(line, FOVX, "| ");
-            if(t.second)attron(COLOR_PAIR(1));
-            
-            else attron(COLOR_PAIR(4));
-            
-            printw(desc.c_str());
-            line++;
-    
-            
+        
+        
+        mvprintw(line, FOVX, "|Your tasks:             ");
+        line++;
+    }
+    std::string desc;
+        
+    std::set<char> on_list;
+    for(auto t : tasks.list){
+        on_list.insert(t.first);
+    }
+    if(sabbo == 10 && on_list.count('0')) printLine("w", "Scan hand in reactor top(simultaneously)", line, 20-16*!tasks.list['0']);
+    if(sabbo == 10 && on_list.count('1')) printLine("w", "Scan hand in reactor bottom(simultaneously)", line, 20-16*!tasks.list['1']);
+    if(sabbo == 9 && on_list.count('2')) printLine("[?]", "Restore power in electical", line, 20-16*!tasks.list['2']);
+    if(sabbo == 11 && on_list.count('3')) printLine("::", "Initiate oxygen resupply in admin", line, 20-16*!tasks.list['3']);
+    if(sabbo == 11 && on_list.count('4')) printLine("::", "Initiate oxygen resupply in O2",line, 20-16*!tasks.list['4']);
+    if(on_list.count('U')){//fuel
+        if(tasks.list['U']){
+            printLine("@","Collect fuel from storage", line, 20-16*!tasks.list['U']);
+        }else{
+            printLine("<()","Fill top engine", line, 20-16*!tasks.list['B']);
+            printLine("<()","Fill bottom engine", line, 20-16*!tasks.list['E']);
         }
     }
+    if(on_list.count('x')){//diverting
+        if(tasks.list['x']){
+            printLine("}{","Divert power from electrical", line, 20-16*!tasks.list['x']);
+        }else{
+            if(on_list.count('t'))printLine("}{","Accept diverted power in communications", line, 20-16*!tasks.list['t']);
+            if(on_list.count('z'))printLine("}{","Accept diverted power in upper engine", line, 20-16*!tasks.list['z']);
+            if(on_list.count('C'))printLine("}{","Accept diverted power in lower engine", line, 20-16*!tasks.list['C']);
+            if(on_list.count('K'))printLine("}{","Accept diverted power in navigations", line, 20-16*!tasks.list['K']);
+            if(on_list.count('N')) printLine("}{","Accept diverted power in O2", line, 20-16*!tasks.list['N']);
+            if(on_list.count('R')) printLine("}{","Accept diverted power in security", line, 20-16*!tasks.list['R']);
+            if(on_list.count('T')) printLine("}{","Accept diverted power in shields", line, 20-16*!tasks.list['T']);
+            if(on_list.count('Z')) printLine("}{","Accept diverted power in weapons", line, 20-16*!tasks.list['Z']);
+        }
+    }
+    if(on_list.count('W')){//empty
+        if(tasks.list['r']||tasks.list['M']){
+            printLine("T","Empty trash in cafeteria", line, 20-16*!tasks.list['r']);
+            printLine("T","Empty trash in O2", line, 20-16*!tasks.list['M']);
+        }else{
+            printLine("T","Empty chute in storage", line, 20-16*!tasks.list['W']);
+        }
+    }
+    //UPLOADS
+    if(on_list.count('@')) printLine("Y", "Upload data from admin", line, 20-16*!tasks.list['@']);
+    if(on_list.count('q')) printLine("Y","Upload data from cafeteria", line, 20-16*!tasks.list['q']);
+    if(on_list.count('u')) printLine("Y","Upload data from communications", line, 20-16*!tasks.list['u']);
+    if(on_list.count('v')) printLine("Y","Upload data from electrical", line, 20-16*!tasks.list['v']);
+    if(on_list.count('J')) printLine("Y","Upload data from navigations", line, 20-16*!tasks.list['J']);
+    if(on_list.count('Y')) printLine("Y","Upload data from weapons", line, 20-16*!tasks.list['Y']);
+    //FIXES
+    if(on_list.count('p')) printLine("?","Fix wires in admin", line, 20-16*!tasks.list['p']);
+    if(on_list.count('s')) printLine("?","Fix wires in cafeteria", line, 20-16*!tasks.list['s']);
+    if(on_list.count('y')) printLine("?","Fix wires in electrical", line, 20-16*!tasks.list['y']);
+    if(on_list.count('L')) printLine("?","Fix wires in navigation", line, 20-16*!tasks.list['L']);
+    if(on_list.count('V')) printLine("?","Fix wires in storage", line, 20-16*!tasks.list['V']);
+    //ALIGN
+    if(on_list.count('A')) printLine("[]","Align upper engine output", line, 20-16*!tasks.list['A']);
+    if(on_list.count('D')) printLine("[]","Align lower engine output", line, 20-16*!tasks.list['D']);
+    
+    //SINGLES
+    if(on_list.count('o')) printLine(" ","Swipe card in admin", line, 20-16*!tasks.list['o']);
+    if(on_list.count('w')) printLine("[!]","Calibrate output in electical", line, 20-16*!tasks.list['w']);
+    if(on_list.count('F')) printLine("(( ))","Medical scan in medbay", line, 20-16*!tasks.list['F']);
+    if(on_list.count('G')){
+        if(sample_countdown>-1)printLine("[+]","Analyze samples in medbay("+std::to_string(sample_countdown/10)+")", line, 20-16*!tasks.list['G']);
+        else printLine("[+]","Analyze samples in medbay", line, 20-16*!tasks.list['G']);
+    }
+    if(on_list.count('H')) printLine("L","Chart course in navigation", line, 20-16*!tasks.list['H']);
+    if(on_list.count('I')) printLine("L","Stablize course in navigation", line, 20-16*!tasks.list['I']);
+    if(on_list.count('O')) printLine("#","Clean airvent in O2", line, 20-16*!tasks.list['O']);
+    if(on_list.count('P')) printLine("::","Start up reactor", line, 20-16*!tasks.list['P']);
+    if(on_list.count('Q')) printLine("M","Unlock reactor manifolds", line, 20-16*!tasks.list['Q']);
+    if(on_list.count('S')) printLine("-()","Prime shields", line, 20-16*!tasks.list['S']);
+    if(on_list.count('X')) printLine("L\"","Clear asteroid with weapons", line, 20-16*!tasks.list['X']);
     attron(COLOR_PAIR(20));
 }
 void giveOutTasks(taskStruct &l){
@@ -2303,7 +3027,6 @@ void giveOutTasks(taskStruct &l){
     std::string divertTasks = "txzCKNRTZ";
     l.received = false;
     l.done = 0;
-    l.to_do = 0;
     l.current = 0;
     l.list.clear();
     while(l.list.size()<3){
@@ -2333,10 +3056,11 @@ void giveOutTasks(taskStruct &l){
             l.list[divertTasks.at(rand()%divertTasks.size())] = 1;
         }   
     
+    l.to_do = 13;
     return;
 }
 
-bool collisionCheck(int id, std::map<int, crewmate> &pos, std::vector<std::string> &gamemap, bool ghost) {
+bool collisionCheck(int id, std::map<int, crewmate> &pos, std::vector<std::string> &gamemap, int sabbo, bool ghost) {
     auto curpos = pos[id];
     if(curpos.x <0 || curpos.y < 0)return true;
     //std::cout << "znak na "<<curpos.second <<":" << curpos.first << "to: "<< (int)gamemap[curpos.first].size()<<std::endl;
@@ -2350,8 +3074,19 @@ bool collisionCheck(int id, std::map<int, crewmate> &pos, std::vector<std::strin
         else if(gamemap[curpos.y].at(curpos.x)>'?'&&gamemap[curpos.y].at(curpos.x)<'[') return false;
         else if(gamemap[curpos.y].at(curpos.x)>'_'&&gamemap[curpos.y].at(curpos.x)<'{') return false;
         else if(gamemap[curpos.y].at(curpos.x)>'/'&&gamemap[curpos.y].at(curpos.x)<':') return false;
+        
+
+        if(gamemap[curpos.y].at(curpos.x)== '$'&&sabbo!=1)return false;
+        if(gamemap[curpos.y].at(curpos.x)== '&'&&sabbo!=2)return false;
+        if(gamemap[curpos.y].at(curpos.x)== '#'&&sabbo!=3)return false;
+        if(gamemap[curpos.y].at(curpos.x)== '\"'&&sabbo!=4)return false;
+        if(gamemap[curpos.y].at(curpos.x)== '>'&&sabbo!=5)return false;
+        if(gamemap[curpos.y].at(curpos.x)== '<'&&sabbo!=6)return false;
+        if(gamemap[curpos.y].at(curpos.x)== '^'&&sabbo!=7)return false;
         else return true;
-    } else return false;
+    
+    }
+    else return false;
 }
 void startGame(status &game) {
     int impostorCount = (game.position.size()/5)+1;
@@ -2366,6 +3101,8 @@ void startGame(status &game) {
         giveOutTasks(player.second);
         
     }
+    game.sabbo = 0;
+    game.timer.sabbotage = 100;
     game.in_progress = true;
     game.winner = -1;
     game.cameras = 0;
@@ -2448,32 +3185,32 @@ void votesResult(status &game) {
 
     }
 }
-void applyMovement(const char ch,  const int i, std::map<int, crewmate>&p, std::vector<std::string> &gamemap, const bool ghost) {
+void applyMovement(const char ch,  const int i, std::map<int, crewmate>&p, std::vector<std::string> &gamemap,int sabbo, const bool ghost) {
     switch(ch) {
     case '6':
         p[i].x++;
-        if(collisionCheck(i, p, gamemap, ghost))
+        if(collisionCheck(i, p, gamemap, sabbo, ghost))
             p[i].x--;
         break;
     case '2':
         p[i].y++;
-        if(collisionCheck(i, p, gamemap, ghost))
+        if(collisionCheck(i, p, gamemap, sabbo, ghost))
             p[i].y--;
         break;
     case '4':
         p[i].x--;
-        if(collisionCheck(i, p, gamemap, ghost))
+        if(collisionCheck(i, p, gamemap, sabbo, ghost))
             p[i].x++;
         break;
     case '8':
         p[i].y--;
-        if(collisionCheck(i, p, gamemap, ghost))
+        if(collisionCheck(i, p, gamemap, sabbo, ghost))
             p[i].y++;
         break;
     case '3':
         p[i].x++;
         p[i].y++;
-        if(collisionCheck(i, p, gamemap, ghost))
+        if(collisionCheck(i, p, gamemap, sabbo, ghost))
         {
             p[i].x--;
             p[i].y--;
@@ -2483,7 +3220,7 @@ void applyMovement(const char ch,  const int i, std::map<int, crewmate>&p, std::
 
         p[i].y++;
         p[i].x--;
-        if(collisionCheck(i, p, gamemap, ghost))
+        if(collisionCheck(i, p, gamemap, sabbo, ghost))
         {
             p[i].x++;
             p[i].y--;
@@ -2492,7 +3229,7 @@ void applyMovement(const char ch,  const int i, std::map<int, crewmate>&p, std::
     case '7':
         p[i].x--;
         p[i].y--;
-        if(collisionCheck(i, p, gamemap, ghost))
+        if(collisionCheck(i, p, gamemap, sabbo, ghost))
         {
             p[i].x++;
             p[i].y++;
@@ -2501,7 +3238,7 @@ void applyMovement(const char ch,  const int i, std::map<int, crewmate>&p, std::
     case '9':
         p[i].y--;
         p[i].x++;
-        if(collisionCheck(i, p, gamemap, ghost))
+        if(collisionCheck(i, p, gamemap, sabbo, ghost))
         {
             p[i].x--;
             p[i].y++;
@@ -2570,11 +3307,11 @@ void sendReply(int sd, int i, status &game) {
                     int tcount = tasksCount(game);
                     if(game.position[i].status%2) {
                         
-                        msg ="p "+std::to_string(tcount)+" "+std::to_string(game.timer.kill[i])+" "+std::to_string(game.cameras)+" ";
+                        msg ="p "+std::to_string(tcount)+" "+std::to_string(game.timer.kill[i])+" "+std::to_string(game.cameras)+" "+std::to_string(game.sabbo)+" "+std::to_string(game.timer.sabbotage)+" ";
 
                     } else {
                         msg ="g "+std::to_string(tcount)+" ";
-                        msg += std::to_string(game.ghosts[i].x)+" "+std::to_string(game.ghosts[i].y)+" "+std::to_string(game.ghosts[i].status)+" ";
+                        msg += std::to_string(game.ghosts[i].x)+" "+std::to_string(game.ghosts[i].y)+" "+std::to_string(game.ghosts[i].status)+" "+std::to_string(game.sabbo)+" "+std::to_string(game.timer.sabbotage)+" ";
                     }
 
                 }
@@ -2600,9 +3337,24 @@ void sendReply(int sd, int i, status &game) {
             }
         }
     }else{
-        msg = "q "+ std::to_string(game.tasks[i].current)+" ";
-        for(auto el : game.position) {
-            msg += std::to_string(el.second.x) + " " + std::to_string(el.second.y) + " "+ std::to_string(el.second.status) + " " ;
+        if(!game.tasks[i].received){
+                    msg ="t ";
+                    for(auto t : game.tasks[i].list){
+                        msg += std::to_string(t.first)+ " "+std::to_string(t.second)+ " ";
+                    }
+                    std::cout << msg<<std::endl;
+                    game.tasks[i].received = true;
+        }else{
+            
+            msg = "q "+ std::to_string(game.tasks[i].current)+" ";
+            if(game.tasks[i].current=='2'){
+                for(int i = 0; i<5;i++){
+                    msg += std::to_string(game.light_switches[i])+" ";
+                }
+            }
+            for(auto el : game.position) {
+                msg += std::to_string(el.second.x) + " " + std::to_string(el.second.y) + " "+ std::to_string(el.second.status) + " " ;
+            }
         }
     }
     send_already:    

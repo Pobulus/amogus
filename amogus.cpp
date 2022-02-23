@@ -538,7 +538,6 @@ void drawHand(int x, int y){
     mvprintw(y+line, x, "    \\                     / ");line++; 
     mvprintw(y+line, x, "     \\___________________/  ");line++; 
 }
-
 bool handleVent(taskStruct tasks, std::map<char,std::vector<std::string>> &triggers, const keyBinds kBinds, std::map<int, crewmate>  &positions, std::vector<std::string> &gamemap,std::vector<std::string> &wallmap, playermodel model, int sockfd, int id, int &sabbo){
     std::map<char, std::pair<int, int>> vent_positions= {
         {'a', {58, 12}},
@@ -755,6 +754,7 @@ std::map<int, int> checkLevels(const taskStruct tasks){
     }
     return levels;
 }
+
 bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &triggers, const keyBinds kBinds, std::map<int, crewmate>  &positions, std::vector<std::string> &gamemap,std::vector<std::string> &wallmap, playermodel model, int sockfd, int id, int &sample_countdown, int &sabbo){
     int  cdown = 18;
     char taskName = tasks.current;
@@ -2458,7 +2458,7 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
                 else strcpy(buff, "e\n");
             } else if(got_ch == kBinds.use) {
                 if(game_started) strcpy(buff, "t\n");
-                else strcpy(buff, "r\n");                
+                else strcpy(buff, "r\n");
             } else if(got_ch == kBinds.quit) {
                 endwin();
                 close(sockfd);
@@ -2584,26 +2584,7 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
             }
             tasks.current = 0;
             tasks.done = 0;
-            
-//             if(tasks.list['0']==0){
-//                 tasks.list.erase('0');
-//             }
-//             if(tasks.list['1']==0){
-//                 tasks.list.erase('1');
-//             }
-//             if(tasks.list['2']==0){
-//                 tasks.list.erase('1');
-//             }
-//             if(tasks.list['3']==0){
-//                 tasks.list.erase('3');
-//             }
-//             if(tasks.list['4']==0){
-//                 tasks.list.erase('4');
-//             }
-//             if(tasks.list['5']==0){
-//                 tasks.list.erase('5');
-//             }
-            
+
         }
         if (loading){
             printCenter("       Loading       ",FOVX, FOVY);
@@ -2714,7 +2695,7 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
                 case 'R':
                 case 'T':
                 case 'Z':
-                    if(!tasks.list['x'])success = handleTask(tasks, triggers, kBinds, positions, gamemap,wallmap, model,  sockfd, id, sample_countdown, sabbo);
+                    if(!tasks.list['x'])success = handleTask(tasks, triggers, kBinds, positions, gamemap,wallmap, model,  sockfd, id, sabbo);
                     break;
                 case 'B':
                 case 'E':
@@ -2733,15 +2714,14 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
                         success = handleTask(tasks, triggers, kBinds, positions, gamemap, wallmap, model, sockfd, id, sample_countdown, sabbo);
                     break;
                 default:
-                    success = handleTask(tasks, triggers, kBinds, positions, gamemap, wallmap, model,  sockfd, id, sample_countdown, sabbo);
+                    success = handleTask(tasks, triggers, kBinds, positions, gamemap, wallmap, model, sockfd, id, sample_countdown, sabbo);
                     break;
             }
             
             if(success){
                 tasks.list[tasks.current] = 0;
                 strcpy(buff, "d\n");
-            }else{
-                
+            }else{                
                 strcpy(buff, "f\n");
             }
             write(sockfd, buff, sizeof(buff));
@@ -2803,7 +2783,6 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
                 int y = positions[id].y;
                 int x = positions[id].x;
                 drawCharacters( x, y, positions, wallmap,model, sabbo);
-
             } else {
                 drawMap(gamemap, wallmap, ghost.x, ghost.y, sabbo);
                 char trig = wallmap[ghost.y][ghost.x];
@@ -3008,11 +2987,8 @@ void giveOutTasks(taskStruct &l){
     std::string divertTasks = "txzCKNRTZ";
     l.received = false;
     l.done = 0;
-    
     l.current = 0;
     l.list.clear();
-   // l.list['F']= 1;//debug purposes, remove later!
-   // l.list['I']= 1;//debug purposes, remove later!
     while(l.list.size()<3){
         l.list[shortTasks.at(rand()%shortTasks.size())] = 1;
     }

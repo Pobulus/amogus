@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
     curs_set(0);
     
     if(!has_colors()) {
-        endwin();
+        // delwin();
         printf("No color");
         return 0;
     }
@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
     mvprintw(0,0, banner.c_str());
     mvprintw(8,0, banner2.c_str());
     // function for connections
-     char buff[MAX];
+    char buff[MAX];
 
 
         bzero(buff, sizeof(buff));
@@ -177,7 +177,7 @@ int main(int argc, char **argv) {
     await(sockfd, playertag, positions, ghst, gamemap,wallmap, cm, triggers, kb, tasks);
    
     // close the socket
-    endwin();
+    // delwin();
     closesocket(sockfd);
     return 0;
     

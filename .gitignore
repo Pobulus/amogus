@@ -4,3 +4,5 @@
 *.a
 amogus
 apt-cyg
+*zip
+*lib
