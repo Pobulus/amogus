@@ -3,6 +3,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <deque>
 #include <fstream>
 #include <string>
 #include <cmath>
@@ -99,6 +100,7 @@ struct status{
     std::map<int, crewmate> ghosts;
     std::map<int, int> votes;
     std::map<int, bool> ready;
+    std::deque<std::pair<int, char>> doorlog;
     bool in_progress;
     unsigned int cameras;
     countdown timer;
@@ -108,20 +110,7 @@ struct status{
     std::pair<int, int> hand_scanners;
 };
 
-const std::string impostor = 
-"YOU ARE THE \n"
-"         ___ __  __ ___  ___  ___ _____ ___  ___ \n"
-"        |_ _|  \\/  | _ \\/ _ \\/ __|_   _/ _ \\| _ \\ \n"
-"         | || |\\/| |  _/ (_) \\__ \\ | || (_) |   / \n"
-"        |___|_|  |_|_|  \\___/|___/ |_| \\___/|_|_\\ \n"
-"               Kill other crewmates to win.";
-const std::string crewm8 = 
-"YOU ARE THE\n"
-"          ___ ___ _____      ____  __   _ _____ ___ \n"
-"         / __| _ \\ __\\ \\    / /  \\/  | /_\\_   _| __|\n"
-"        | (__|   / _| \\ \\/\\/ /| |\\/| |/ _ \\| | | _| \n"
-"         \\___|_|_\\___| \\_/\\_/ |_|  |_/_/ \\_\\_| |___|\n"
-"               Complete all your tasks to win.";
+
 const std::string banner = 
 "  ______                                     __    __   \n"        
 " /      \\                                   /  |  /  |          \n"
@@ -172,21 +161,7 @@ bool readParameters ( int& argc, char** argv, std::string& ip, bool &a, bool &kb
  */
 std::vector<std::string> loadMap ( std::string mapname ) ;
 
-/**
- * Draws the map from specified perspecitve
- * @param gmap game map data
- * @param x horizontal position
- * @param y vertical position
- */
-void drawMap(std::vector<std::string> &gmap, std::vector<std::string> &wallmap, int x, int y, int sabbo, bool camera=false);
 
-/**
- * prints a file, replacing characters with specified colors. 
- * @param colA color to replace 'a' and 'A'
- * @param colB color to replace 'b' and 'B'
- * @param filename name of the text file to display
- */
-void cutscene(int colA, int colB, std::string filename);
 
 /**
  * Calculates the disctance between point 1 and 2
@@ -198,29 +173,21 @@ void cutscene(int colA, int colB, std::string filename);
  */
 int distance(int x1, int y1, int x2, int y2);
 
-/**
- * Displays text in the center of a box
- * @param text the text to display
- * @param limX box width
- * @param limY box height
- * @param offX box offset in x cooridnate (default: 0)
- * @param offY box offset in y cooridnate (default: 0)
- */
-void printCenter(std::string text, const int limX, const int limY, const int offX=0, const int offY=0);
+
 
 /**
  * Handles player input and communication with the server
  */
+std::string key(int ch);
 void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewmate &ghost, std::vector<std::string> &gamemap, std::vector<std::string> &wallmap, playermodel model, std::map<char,std::vector<std::string>> &triggers, bool kb, taskStruct &tasks);
 void drawCharacters(const int x, const int y, std::map<int, crewmate>  &positions, std::vector<std::string> &wallmap, playermodel model, int sabbo);
 void printTasks(taskStruct &tasks, std::map<char,std::vector<std::string>> &triggers, int status, int sample_countdown, int sabbo);
 std::map<char,std::vector<std::string>> loadLabels(std::string filename);
 void sendReply(int sd,int i,  status &game);
-void applyMovement(const char ch,  const int i, std::map<int, crewmate>&p, std::vector<std::string> &gamemap, int sabbo, const bool ghost);
+void applyMovement(const char ch,  const int i, std::map<int, crewmate>&p, std::vector<std::string> &gamemap,int sabbo, const bool ghost, std::deque<std::pair<int, char>> &doorlog);
 void votesResult(status &game);
 void cleanDeadBodies(std::map<int, crewmate> &position);
 void startGame(status &game);
 bool collisionCheck(int id, std::map<int, crewmate> &pos, std::vector<std::string> &gamemap, bool ghost);
-bool handleTask(char taskName, std::map<char,std::vector<std::string>> &triggers, const keyBinds kBinds, std::map<int, crewmate>  &positions, std::vector<std::string> &gamemap,std::vector<std::string> &wallmap, playermodel model, int sockfd, int id);
-void drawCircle(const int x, const int y, const int r, std::string characters);
+int randInt( int low, int high);
 void wait(int n);

@@ -1,4 +1,5 @@
 #include "amogus.h"
+#include "tasks.h"
 #include <stdio.h>
 #include <string.h>
 #include <string>
@@ -409,6 +410,8 @@ int main(int argc, char *argv[])
                                 } else if(triggers[trigger][2]=="cams") { //security cameras
                                      if(game.position[i].status%2)game.tasks[i].current=trigger;
                                     game.cameras++;
+                                } else { // admin door logs
+                                     if(game.position[i].status%2)game.tasks[i].current=trigger;
                                 }
                             } else if(triggers[trigger][0]=="task") {
                                 if(game.position[i].status >>1%2==0&&game.tasks[i].list[trigger]){
@@ -489,7 +492,7 @@ int main(int argc, char *argv[])
                         
                          sendReply(sd, i, game);
                     }else if(buffer[0] == 'e'){//empty message
-                        
+                        sendReply(sd, i, game);
                     } else if(buffer[0] == 'd'&& game.in_progress) {//player has done a task
                         if(game.tasks[i].current>='a'&&game.tasks[i].current<'o'){//player moves to next vent
                            game.tasks[i].current = vent_connections[game.tasks[i].current];
@@ -566,12 +569,12 @@ int main(int argc, char *argv[])
                     } else if(buffer[0] == 'm') { //player moves
 
                         if(game.position[i].status%2) {
-                            applyMovement(buffer[1], i, game.position, gamemap, game.sabbo, false);
+                            applyMovement(buffer[1], i, game.position, gamemap, game.sabbo, false, game.doorlog);
 
                             sendReply(sd, i, game);
 
                         } else {
-                            applyMovement(buffer[1], i, game.ghosts, gamemap, game.sabbo, true);
+                            applyMovement(buffer[1], i, game.ghosts, gamemap, game.sabbo, true, game.doorlog);
                             sendReply(sd, i, game);
 
                         }

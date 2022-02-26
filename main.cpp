@@ -1,5 +1,7 @@
 #include <iostream>
 #include "amogus.h"
+#include "draw.h"
+
 
 /* ______                                     __    __           
  /      \                                   /  |  /  |          
@@ -38,6 +40,9 @@ int main(int argc, char **argv) {
     triggers = loadLabels("cha_list.txt");
     triggers[' '] = {"", ""};
     std::map<int,  crewmate> positions;
+    
+ 
+    
     int sockfd, connfd;
     struct sockaddr_in servaddr, cli;
    
@@ -122,7 +127,7 @@ int main(int argc, char **argv) {
     init_pair(64, COLOR_BLACK, COLOR_CYAN );
 
     mvprintw(0,0, banner.c_str());
-    char buff[MAX];
+         char buff[MAX];
 
 
         bzero(buff, sizeof(buff));
@@ -142,6 +147,7 @@ int main(int argc, char **argv) {
     refresh();
     // function for connections
     srand(time(NULL));
+       
     crewmate ghst; //pozycja gracza kiedy jest duchem
     playermodel cm;
     if(ascii)
