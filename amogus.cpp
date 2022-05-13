@@ -1285,7 +1285,8 @@ void sendReply(int sd, int i, status &game) {
         }else{
             
             msg = "q "+ std::to_string(game.tasks[i].current)+" ";
-            if(game.tasks[i].current=='8'){//admin logs
+            if(game.tasks[i].current=='8'){//admin 
+				msg += std::to_string(game.sabbo)+" ";
                 for(auto log : game.doorlog){
                     msg += std::to_string(log.first)+" "+ std::to_string(log.second)+" ";
                 }

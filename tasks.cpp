@@ -281,22 +281,28 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
             std::stringstream decoder;
             decoder << buff;
             char mode;
-            int a, b;
-            decoder >> mode >> a;
+            int a, b, sab;
+            decoder >> mode >> a >> sab;
             
             if(mode == 'q'){
-                int line = 0;
-//                 decoder >> b;
-                while(decoder >> guy >> door) {
-                    attron(COLOR_PAIR(guy+1));
-                    if(door < 0){
-                        mvprintw(3+line, 4, ">%s exits %s                  ", colors[guy].c_str(), triggers[(char)-door][1].c_str());
-                    }else{
-                        mvprintw(3+line, 4, ">%s enters %s                  ", colors[guy].c_str(), triggers[(char)door][1].c_str());
-                    }
-                    line++;
-                }
-                attron(COLOR_PAIR(20));
+				if(sab!=8){
+					int line = 0;
+	//                 decoder >> b;
+					while(decoder >> guy >> door) {
+						attron(COLOR_PAIR(guy+1));
+						if(door < 0){
+							mvprintw(3+line, 4, ">%s exits %s                  ", colors[guy].c_str(), triggers[(char)-door][1].c_str());
+						}else{
+							mvprintw(3+line, 4, ">%s enters %s                  ", colors[guy].c_str(), triggers[(char)door][1].c_str());
+						}
+						line++;
+					}
+					attron(COLOR_PAIR(20));
+				}else{
+					mvprintw(3, 4, "ERROR LOADING FILE");
+					mvprintw(4, 4, "DISCONNECTED FROM SERVER");
+					
+				}
             }
             if(mode == 't'){
                 tasks.list.clear();
