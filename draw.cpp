@@ -228,6 +228,9 @@ void drawMap(std::vector<std::string> &gmap, std::vector<std::string> &wallmap, 
                     attroff(A_BOLD);
                     attron(COLOR_PAIR(20));
                     break;
+                case '&':
+                    addch(' ');
+                    break;
                 default:
                     addch(gmap[k+y-(FOVY/2)].at(i+x-(FOVX/2)));
                     break;

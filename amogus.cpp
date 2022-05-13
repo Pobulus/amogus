@@ -5,6 +5,9 @@ template <typename T> int sgn(T val) {
     return (T(0) < val) - (val < T(0));
 }
 
+
+
+
 bool readParameters ( int& argc, char** argv, std::string& ip, bool &a, bool &kb ) {
     bool errors = false;
     for ( int i = 1; i < argc - 1; i++ ) {
@@ -184,7 +187,155 @@ int distance(int x1, int y1, int x2, int y2) {
 int randInt( int low, int high){
     return low+rand()%(high-low);
 }
-
+std::string getControls(char task, bool game_started, int status, keyBinds kBinds){
+    std::string vents = "abcdefghijklmn";
+    std::string empty = "rMW";
+    std::string accept = "tzCKNRTZ";
+    std::string upload = "YJvuq@";
+    std::string fix = "VLyspHIX";
+    std::string keypads = "34PQS";
+    
+    std::string controls="";
+    if(task == 0){
+        controls += key(kBinds.moveN);
+        controls += key(kBinds.moveW);
+        controls += key(kBinds.moveE);
+        controls += key(kBinds.moveS);
+        controls += "move ";
+        controls += key(kBinds.moveNW);
+        controls += key(kBinds.moveNE);
+        controls += key(kBinds.moveSW);
+        controls += key(kBinds.moveSE);
+        controls += "diagonal ";
+        if(game_started){
+            controls += key(kBinds.use);
+            controls += "use ";
+            controls += key(kBinds.report);
+            controls += "report ";
+        }else{
+            controls += key(kBinds.use);
+            controls += "ready ";
+        }
+        if(status == 3){
+            controls += key(kBinds.kill);
+            controls += "kill ";
+            controls += key(kBinds.sabbotage);
+            controls += "sabbotage ";
+        }
+        controls += key(kBinds.quit);
+        controls += "quit ";
+    }else if(vents.find(task)!=std::string::npos){
+        controls += key(kBinds.use);
+        controls += "next vent ";
+        controls += key(kBinds.quit);
+        controls += "exit vent";
+    }else if(empty.find(task)!=std::string::npos){
+        controls += key(kBinds.moveS);
+        controls += "pull handle";
+        controls += key(kBinds.quit);
+        controls += "abandon task";
+    }else if(accept.find(task)!=std::string::npos){
+        controls += key(kBinds.use);
+        controls += "accept power";
+        controls += key(kBinds.quit);
+        controls += "abandon task";
+    }else if(upload.find(task)!=std::string::npos){
+        controls += key(kBinds.quit);
+        controls += "abandon task";
+    }else if(fix.find(task)!=std::string::npos){
+        controls += key(kBinds.moveNW);
+        controls += key(kBinds.moveN);
+        controls += key(kBinds.moveNE);
+        controls += key(kBinds.moveW);
+        controls += key(kBinds.moveE);
+        controls += key(kBinds.moveSW);
+        controls += key(kBinds.moveS);
+        controls += key(kBinds.moveSE);
+        controls += "move ";
+        if(task=='X'){
+            controls += key(kBinds.use);
+            controls += "shoot ";
+        }
+        controls += key(kBinds.quit);
+        controls += "abandon task ";
+    }else if(keypads.find(task)!=std::string::npos){
+        controls += key(kBinds.moveNW);
+        controls += key(kBinds.moveN);
+        controls += key(kBinds.moveNE);
+        controls += key(kBinds.moveW);
+        controls += key(kBinds.middle);
+        controls += key(kBinds.moveE);
+        controls += key(kBinds.moveSW);
+        controls += key(kBinds.moveS);
+        controls += key(kBinds.moveSE);
+        controls += "keypad ";
+        controls += key(kBinds.quit);
+        controls += "abandon task ";
+    }else if(task == 'o'){
+        controls += key(kBinds.moveW);
+        controls += key(kBinds.moveE);
+        controls += "slide card ";
+        controls += key(kBinds.quit);
+        controls += "abandon task ";
+    }else if(task == 'w'){
+        controls += key(kBinds.use);
+        controls += "stop ring ";
+        controls += key(kBinds.quit);
+        controls += "abandon task ";
+    }else if(task == 'O'){
+        controls += key(kBinds.moveN);
+        controls += key(kBinds.moveS);
+        controls += "move ";
+        controls += key(kBinds.use);
+        controls += "blow air ";
+        controls += key(kBinds.quit);
+        controls += "abandon task ";
+    }else if(task == 'G'||task=='2'){
+        controls += key('1');
+        controls += key('2');
+        controls += key('3');
+        controls += key('4');
+        controls += key('5');
+        controls += "choose ";
+        controls += key(kBinds.quit);
+        controls += "abandon task ";
+    }else if(task == 'D'||task =='A'){
+        controls += key(kBinds.moveN);
+        controls += key(kBinds.moveS);
+        controls += "adjust alignment ";
+        controls += key(kBinds.quit);
+        controls += "abandon task ";
+    }else if(task == '2'){
+        controls += key(kBinds.moveN);
+        controls += key(kBinds.moveS);
+        controls += "amplitude ";
+        controls += key(kBinds.moveW);
+        controls += key(kBinds.moveE);
+        controls += "frequency ";
+        controls += key(kBinds.quit);
+        controls += "abandon task ";
+    }else if(task == 'x'){
+        controls += key(kBinds.moveW);
+        controls += key(kBinds.moveE);
+        controls += "switch ";
+        controls += key(kBinds.moveN);
+        controls += key(kBinds.moveS);
+        controls += "level ";
+        controls += key(kBinds.quit);
+        controls += "abandon task ";
+    }else{
+        controls += key(kBinds.quit);
+        controls += "abandon task ";
+    }
+        
+        
+    
+    while( controls.length() < FOVX){
+            controls+=" ";
+    }
+    return controls;
+            
+}
 
 void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewmate &ghost, std::vector<std::string> &gamemap, std::vector<std::string> &wallmap,playermodel model, std::map<char,std::vector<std::string>> &triggers, bool kb, taskStruct &tasks)
 {
@@ -288,7 +439,7 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
         bzero(buff, sizeof(buff));
         read(sockfd, buff, sizeof(buff));
 
-       // mvprintw(FOVY+1,0,"From Server : %s   ", buff);
+        //mvprintw(FOVY+5,0,"From Server : %s   ", buff);
         std::stringstream decoder;
         decoder << buff;
         int a=0, b=0, c=0, cnt=0;
@@ -548,10 +699,10 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
                     break;
             }
             
-            if(success){
+            if(success){//send task done
                 tasks.list[tasks.current] = 0;
                 strcpy(buff, "d\n");
-            }else{
+            }else{//send task failed
                 
                 strcpy(buff, "f\n");
             }
@@ -565,52 +716,27 @@ void await(int sockfd, const int id, std::map<int, crewmate>  &positions, crewma
             if(positions[id].status%2) {
                 drawMap(gamemap, wallmap, positions[id].x, positions[id].y, sabbo, cams);
                 char trig = wallmap[positions[id].y][positions[id].x];
-                std::string controls;
-                controls += key(kBinds.moveN);
-                controls += key(kBinds.moveW);
-                controls += key(kBinds.moveE);
-                controls += key(kBinds.moveS);
-                controls += "move ";
-                controls += key(kBinds.moveNW);
-                controls += key(kBinds.moveNE);
-                controls += key(kBinds.moveSW);
-                controls += key(kBinds.moveSE);
-                controls += "diagonal ";
-                if(game_started){
-                controls += key(kBinds.use);
-                controls += "use ";
-                controls += key(kBinds.report);
-                controls += "report ";
-                }else{
-                controls += key(kBinds.use);
-                controls += "ready ";
-                }
-                controls += key(kBinds.quit);
-                controls += "quit ";
                 
                 if(positions[id].status == 3){
-                    controls += key(kBinds.kill);
-                    controls += "kill ";
-                    controls += key(kBinds.sabbotage);
-                    controls += "sabbotage ";
+                    
                     attron(COLOR_PAIR(8));
                     move(FOVY+2, 0);
                     if(killing_timeout)printw("Killing timeout: %d ", killing_timeout/10);
                     if(sabbo_countdown)printw(" Sabbotage timeout %d  ", sabbo_countdown/10);
                    attron(COLOR_PAIR(20));
-                 if(!killing_timeout&&!sabbo_countdown)printw("                                          ");
+                 if(!killing_timeout&&!sabbo_countdown)printw("                                             ");
                    
                     
                 }
                 move(FOVY+1, 0);
                 attron(COLOR_PAIR(14));
-                printw(controls.c_str());
+                printw(getControls(0, game_started, positions[id].status, kBinds).c_str());
                  attron(COLOR_PAIR(20));
-                if(trig != ' ') {
-                    mvprintw(FOVY+3, 0, "current trigger type: %s    ", triggers[trig][0].c_str());
-                    mvprintw(FOVY+4, 0, "location: %s      ", triggers[trig][1].c_str());
-                    mvprintw(FOVY+5, 0, "argument: %s      ", triggers[trig][2].c_str());
-                }
+//                 if(trig != ' ') {
+//                     mvprintw(FOVY+3, 0, "current trigger type: %s    ", triggers[trig][0].c_str());
+//                     mvprintw(FOVY+4, 0, "location: %s      ", triggers[trig][1].c_str());
+//                     mvprintw(FOVY+5, 0, "argument: %s      ", triggers[trig][2].c_str());
+//                 }
                 int y = positions[id].y;
                 int x = positions[id].x;
                 drawCharacters( x, y, positions, wallmap,model, sabbo);
@@ -810,6 +936,8 @@ void printTasks(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
     if(on_list.count('S')) printLine("-()","Prime shields", line, 20-16*!tasks.list['S']);
     if(on_list.count('X')) printLine("L\"","Clear asteroid with weapons", line, 20-16*!tasks.list['X']);
     attron(COLOR_PAIR(20));
+    mvprintw(line, FOVX, "                                      ");
+    mvprintw(line+1, FOVX, "                                      ");
 }
 void giveOutTasks(taskStruct &l){
    
@@ -980,9 +1108,11 @@ void votesResult(status &game) {
 
     }
 }
-void applyMovement(const char ch,  const int i, std::map<int, crewmate>&p, std::vector<std::string> &gamemap,int sabbo, const bool ghost, std::deque<std::pair<int, char>> &doorlog) {
+void applyMovement(const char ch,  const int i, std::map<int, crewmate>&p, std::vector<std::string> &gamemap,std::vector<std::string> &displaymap, int sabbo, const bool ghost, std::deque<std::pair<int, char>> &doorlog) {
     std::string doors = "$&#\"<>^";
-    char previous = gamemap[p[i].y].at(p[i].x);
+    char previous = displaymap[p[i].y].at(p[i].x);
+    char previousDoor = gamemap[p[i].y].at(p[i].x);
+    
     switch(ch) {
     case '6':
         p[i].x++;
@@ -1043,8 +1173,13 @@ void applyMovement(const char ch,  const int i, std::map<int, crewmate>&p, std::
         break;
 
     }
-    if(previous==' ' && doors.find(gamemap[p[i].y].at(p[i].x))!=std::string::npos){
+    if(previous=='&' && displaymap[p[i].y].at(p[i].x)=='$'){
         doorlog.push_back({i, gamemap[p[i].y].at(p[i].x)});
+        if(doorlog.size()> 10){
+            doorlog.pop_front();
+        }
+    }else if(previous == '$' && displaymap[p[i].y].at(p[i].x)=='&'){
+        doorlog.push_back({i, -previousDoor});
         if(doorlog.size()> 10){
             doorlog.pop_front();
         }

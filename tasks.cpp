@@ -136,6 +136,11 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
             }else{
                 decoder.clear();
             }
+            
+            move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));
         }
         
         
@@ -239,6 +244,10 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
                 }
                 taskloop = false;
             } 
+            move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));
         }
         attron(COLOR_PAIR(4));
         printCenter("Power restored!", FOVX, FOVY/3);
@@ -273,7 +282,6 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
             decoder << buff;
             char mode;
             int a, b;
-            int prev = 0;
             decoder >> mode >> a;
             
             if(mode == 'q'){
@@ -281,13 +289,11 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
 //                 decoder >> b;
                 while(decoder >> guy >> door) {
                     attron(COLOR_PAIR(guy+1));
-                    if(door == prev){
-                        mvprintw(3+line, 4, ">%s exits %s                  ", colors[guy].c_str(), triggers[(char)door][1].c_str());
+                    if(door < 0){
+                        mvprintw(3+line, 4, ">%s exits %s                  ", colors[guy].c_str(), triggers[(char)-door][1].c_str());
                     }else{
                         mvprintw(3+line, 4, ">%s enters %s                  ", colors[guy].c_str(), triggers[(char)door][1].c_str());
                     }
-                    
-                    prev = door;
                     line++;
                 }
                 attron(COLOR_PAIR(20));
@@ -301,6 +307,10 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
                 tasks.list.erase('8');
                 taskloop = false;
             } 
+            move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));
         }
         tasks.list.erase('8');
         clear();
@@ -354,6 +364,10 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
             printCenter("Amplitude: "+std::to_string(A)+" ", FOVX,  FOVY-12, 0, 11);
             printCenter("Frequency: "+std::to_string(1000/f)+"kHz  " , FOVX,  FOVY-12, 0, 13);
             t++;
+            move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));
         }
         
         int cdown = 20;
@@ -428,6 +442,10 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
                 tasks.list.erase('0');
                 taskloop = false;
             }   
+            move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));
         }
         clear();
         return false; 
@@ -452,6 +470,10 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
             attron(COLOR_PAIR(20));
             mvprintw((int)FOVY*0.75, FOVX-5, "]");
             taskload--;
+            move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));
             
         }
         attron(COLOR_PAIR(4));
@@ -545,6 +567,10 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
                    taskloop = false;
                 } 
             }
+            move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));
         }
         attron(COLOR_PAIR(20));
         printCenter("Task completed!", FOVX, FOVY/2);
@@ -612,6 +638,10 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
             if(!over){
                 taskloop = false;
             }
+            move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));
         }
         attron(COLOR_PAIR(20));
         printCenter("Task completed!", FOVX, FOVY/2);
@@ -620,7 +650,7 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
         return true;
     }else if(triggers[taskName][2]=="calibrate"){
         int ch; 
-        int delay = 3;
+        int delay = 1;
         clear();
         int stage = 0;
         int a=0, b=0, c=0;
@@ -639,19 +669,20 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
                 chosen = 0;
                 pressed = false;
             }
-            drawBox(0,0,FOVX, 11, "double");
-            drawBox(0,12,FOVX, 6, "basic");
+            drawBox(0,0,FOVX, FOVY, "double");
+            
             
             drawRing(2, 1, a, 5);
             drawRing(22, 1, b, 6);
             drawRing(42, 1, c, 2);
-            mvaddch(10, 9, '^');
-            mvaddch(10, 29, '^');
-            mvaddch(10, 49, '^');
+            attron(COLOR_PAIR(20));
+            mvprintw(10, 8, "^^^");
+            mvprintw(10, 28, "^^^");
+            mvprintw(10, 48, "^^^");
             wait(delay);
-            drawBox(2, 13, 14, 3, "basic");
-            drawBox(22, 13, 14, 3, "basic");
-            drawBox(42, 13, 14, 3, "basic");
+            drawBox(2, 12, 14, 3, "basic");
+            drawBox(22, 12, 14, 3, "basic");
+            drawBox(42, 12, 14, 3, "basic");
             switch(stage){
                 case 0:
                     a++;
@@ -662,7 +693,7 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
                         if(a%32>17&&a%32<21){
                             stage=1;
                             attron(COLOR_PAIR(12));
-                            drawSquare(3, 14, 13, 2, " ");
+                            drawSquare(3, 13, 13, 2, " ");
                             attron(COLOR_PAIR(20));
                             drawSquare(3, 17, 13, 1, " ");
                         }
@@ -677,7 +708,7 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
                         if(b%32>17&&b%32<21){
                             stage=2;
                             attron(COLOR_PAIR(13));
-                            drawSquare(23, 14, 13, 2, " ");
+                            drawSquare(23, 13, 13, 2, " ");
                             attron(COLOR_PAIR(20));
                             drawSquare(23, 17, 13, 1, " ");
                         }
@@ -692,13 +723,17 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
                         
                         if(c%32>17&&c%32<21){
                             attron(COLOR_PAIR(9));
-                            drawSquare(43, 14, 13, 2, " ");
+                            drawSquare(43, 13, 13, 2, " ");
                             taskloop = false;
                         }
                     }
                 break;
             }
             attron(COLOR_PAIR(20));
+            move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));
             
         }
         printCenter("Task completed!", FOVX, FOVY/2);
@@ -737,6 +772,7 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
         attron(COLOR_PAIR(20));
         int c = 0;
         while(taskloop){
+            drawBox(0,0,FOVX, FOVY, "double");
             ch = getch();
             if(ch == kBinds.quit){
                 clear();
@@ -772,6 +808,10 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
                 cnt--;
                 if(!cnt)taskloop = false;
             }
+            move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));
         }
         attron(COLOR_PAIR(20));
         printCenter("Task completed!", FOVX, FOVY/2);
@@ -811,6 +851,10 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
              attron(COLOR_PAIR(1));
              mvprintw(t, 3*(FOVX/4)+6, "[===]");
              attron(COLOR_PAIR(20));
+             move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));
         }
         
         while(cdown){
@@ -852,6 +896,10 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
             for(int y = 0; y<FOVY; y++){
                 mvaddch(y, curX, '|');
             }
+            move(FOVY+1, 0);
+            attron(COLOR_PAIR(14));
+            printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+            attron(COLOR_PAIR(20));
             mvprintw(curY, curX, "+");
             mvprintw(FOVY/2, FOVX/2, "+");
             if(curX==(int)FOVX/2&&curY==(int)FOVY/2)
@@ -881,6 +929,7 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
                 if(curY<FOVY)curY++;
                 if(curX>0)curX--;
             }
+        
         }
         attron(COLOR_PAIR(4));
         for(int x = 0; x<FOVX; x++){
@@ -1020,6 +1069,10 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
                     }
                 }
             }
+            move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));
         }
         attron(COLOR_PAIR(20));
         printCenter("Task completed!", FOVX, FOVY/2);
@@ -1096,6 +1149,10 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
                     }
                 }
             }
+        move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));
         }
         attron(COLOR_PAIR(20));
         printCenter("Task completed!", FOVX, FOVY/2);
@@ -1151,7 +1208,10 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
             attron(COLOR_PAIR(20));
             drawBox(0,0,FOVX, FOVY, "double");
              drawBox(1,(FOVY/2),FOVX-2, (FOVY/2)-1, "double");
-            
+        move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));
         }
         attron(COLOR_PAIR(20));
         printCenter("Task completed!", FOVX, FOVY/2);
@@ -1200,6 +1260,11 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
             drawCharacters( x[cam], y[cam], positions, wallmap,model, sabbo);
             drawBox(0,0, FOVX, FOVY, "bold");
             printCenter("Camera: "+std::to_string(cam+1), FOVX, 1);
+        move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));
+            
         }
     }else if(triggers[taskName][2]=="card"){
         bool taskloop = true;
@@ -1236,7 +1301,10 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
             if(x==FOVX-w){
                 taskloop = false;
             }
-            
+        move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));    
         }
         attron(COLOR_PAIR(20));
         printCenter("Task completed!", FOVX, FOVY/2);
@@ -1317,6 +1385,10 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
             if(curX == C.first&&curY==C.second){
                 taskloop = false;
             }
+        move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));
         }
         printCenter("Task completed!", FOVX, FOVY/2);
         wait(20);
@@ -1398,7 +1470,10 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
                 attron(COLOR_PAIR(20));
                 
             }
-            
+        move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));    
         }
         printCenter("Task completed!", FOVX, FOVY/2);
         wait(20);
@@ -1461,7 +1536,10 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
             }
             mvprintw(y, FOVX*0.75-2, "D");
             drawBox(0,0,FOVX*0.75, FOVY, "bold");
-             
+         move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));    
         }
         attron(COLOR_PAIR(20));
         printCenter("Task completed!", FOVX, FOVY/2);
@@ -1485,7 +1563,10 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
             if(!flipped)cutscene(1, 6, "divertOff.txt");
             else{ cutscene(4, 2, "divertOn.txt");taskload=0;}
             printCenter("Divert power to "+triggers[taskName][1], FOVX, FOVY/2);
-            
+         move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));   
             
         }
         attron(COLOR_PAIR(20));
@@ -1547,6 +1628,10 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
             if(taskload<4) printCenter("DONE.", FOVX/2, FOVY/3, FOVX/2, 5);
                 
             taskload--;
+        move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));
         }
         attron(COLOR_PAIR(20));
         printCenter("Task completed!", FOVX, FOVY/2);
@@ -1631,7 +1716,10 @@ bool handleTask(taskStruct &tasks, std::map<char,std::vector<std::string>> &trig
                 
             }
             
-            
+        move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));
             
             
         }
@@ -1749,6 +1837,10 @@ bool handleVent(taskStruct tasks, std::map<char,std::vector<std::string>> &trigg
             mvprintw((FOVY/2)+TOPOFFSET, (FOVX/2), model.ghost.c_str());
             attron(COLOR_PAIR(20));
         }
+        move(FOVY+1, 0);
+        attron(COLOR_PAIR(14));
+        printw(getControls(tasks.current, true, positions[id].status, kBinds).c_str());
+        attron(COLOR_PAIR(20));
     }
 
     return result;

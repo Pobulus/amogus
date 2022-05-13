@@ -184,10 +184,11 @@ void drawCharacters(const int x, const int y, std::map<int, crewmate>  &position
 void printTasks(taskStruct &tasks, std::map<char,std::vector<std::string>> &triggers, int status, int sample_countdown, int sabbo);
 std::map<char,std::vector<std::string>> loadLabels(std::string filename);
 void sendReply(int sd,int i,  status &game);
-void applyMovement(const char ch,  const int i, std::map<int, crewmate>&p, std::vector<std::string> &gamemap,int sabbo, const bool ghost, std::deque<std::pair<int, char>> &doorlog);
+void applyMovement(const char ch,  const int i, std::map<int, crewmate>&p, std::vector<std::string> &gamemap, std::vector<std::string> &displaymap, int sabbo, const bool ghost, std::deque<std::pair<int, char>> &doorlog);
 void votesResult(status &game);
 void cleanDeadBodies(std::map<int, crewmate> &position);
 void startGame(status &game);
 bool collisionCheck(int id, std::map<int, crewmate> &pos, std::vector<std::string> &gamemap, bool ghost);
 int randInt( int low, int high);
 void wait(int n);
+std::string getControls(char task, bool game_started, int status, keyBinds kBinds);

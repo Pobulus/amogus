@@ -30,8 +30,10 @@ int main(int argc, char *argv[])
     game.timer.voting = 0;
     game.winner = 0;
     std::vector<std::string> gamemap;
+    std::vector<std::string> displaymap;
     std::map<char,std::vector<std::string>> triggers;
     gamemap = loadMap("mapwalls.txt");
+    displaymap = loadMap("map.txt");
     triggers = loadLabels("cha_list.txt");
 
     int opt = TRUE;
@@ -543,7 +545,7 @@ int main(int argc, char *argv[])
                         }
                         //sendReply(sd, i, game);
                     } else if(buffer[0] == 'f'&& game.in_progress) {//player has failed a task
-                        if(game.tasks[i].current=='6')game.cameras--;
+                        if(game.tasks[i].current=='7')game.cameras--;
                         else if(game.tasks[i].current>='a'&&game.tasks[i].current<'o'){//player leaves a vent
                             game.position[i].x = vent_positions[game.tasks[i].current].first;
                             game.position[i].y = vent_positions[game.tasks[i].current].second;
@@ -569,12 +571,12 @@ int main(int argc, char *argv[])
                     } else if(buffer[0] == 'm') { //player moves
 
                         if(game.position[i].status%2) {
-                            applyMovement(buffer[1], i, game.position, gamemap, game.sabbo, false, game.doorlog);
+                            applyMovement(buffer[1], i, game.position, gamemap,displaymap, game.sabbo, false, game.doorlog);
 
                             sendReply(sd, i, game);
 
                         } else {
-                            applyMovement(buffer[1], i, game.ghosts, gamemap, game.sabbo, true, game.doorlog);
+                            applyMovement(buffer[1], i, game.ghosts, gamemap, displaymap, game.sabbo, true, game.doorlog);
                             sendReply(sd, i, game);
 
                         }
