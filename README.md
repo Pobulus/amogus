@@ -1,5 +1,6 @@
 # Ȃ̶̢̯̩͕͎͇̼̅̈́͒̓̀̉̿̂͘̕M̸̢̡̳̥̯̮̯̭̤̬̯͎͓̄̐̔Ơ̶̡̫̩͙̥͍͇̩̪̬̅̔̿́́̎̈́͐̇̏̆͘Ģ̸͉̝̜̻̪͙̬̠̮̰̩̻̻̈́̀̓ͅŬ̷͎̬͍̠̠̹͇͍̦͓̺Ş̷̨̡̨̧͖̙̠̤̼̦͇͈͓́̉̽͘͜
 
+Warning: the code for this is **extremely bad**. No objects, no classes, it's just a big bundle of spaghetti that I bodged togheter to form a somewhat functioning game. This was probably a mistake.
 ## Compiling
 You have to install libncurses first.
 `cmake . && make all` should work. If it doesn't try these:<br>
